@@ -1,3 +1,117 @@
+voici une note stratégique sur la gestion des versions au sein de votre GED. Pour un cabinet d'avocats, la traçabilité n'est pas une option : c'est une preuve de rigueur déontologique.
+
+Cette documentation explique comment votre système garantit qu'aucune information n'est jamais perdue, même en cas de modification d'une pièce.
+
+---
+
+# 📑 Stratégie de Versionnage des Documents
+
+Dans le cadre de la **GED Cabinet**, nous avons adopté une approche de **versionnage immuable**. Contrairement à un système de fichiers classique qui écrase les données, notre architecture conserve l'historique complet de chaque document.
+
+## ⚙️ Mécanisme de Fonctionnement
+
+Chaque mise à jour d'un document ne modifie pas le fichier existant, mais crée une nouvelle instance dans la base de données.
+
+| Champ | Rôle Technique |
+| --- | --- |
+| **`version`** | Un entier incrémenté automatiquement (v1, v2, v3...). |
+| **`is_current_version`** | Un booléen (Vrai/Faux) qui indique quelle version est la référence actuelle. |
+| **`previous_version`** | Un lien (Clé étrangère) vers la version immédiatement précédente. |
+| **`file_hash`** | L'empreinte numérique (SHA-256) unique du fichier pour garantir son intégrité. |
+
+---
+
+## 🔄 Flux de Travail : Mise à jour d'une pièce
+
+Lorsqu'un collaborateur téléverse une nouvelle version d'une pièce de procédure (ex: un mémoire en défense) :
+
+1. **Calcul de l'empreinte** : Le Backend calcule le hachage du nouveau fichier.
+2. **Archivage de l'ancienne** : L'ancienne version voit son champ `is_current_version` passer à `False`.
+3. **Création du lien** : La nouvelle version est enregistrée avec `is_current_version = True` et pointe vers l'ancienne via `previous_version`.
+4. **Incrémentation** : Le numéro de version passe de  à .
+
+---
+
+## ⚖️ Bénéfices Juridiques et Techniques
+
+### 1. Intégrité de la Preuve
+
+Grâce au hachage SHA-256, nous pouvons prouver devant un tribunal ou un expert que le document n'a subi aucune altération entre son upload et sa consultation. Si le fichier physique est modifié manuellement sur le serveur, le hachage ne correspondra plus, alertant immédiatement l'administrateur.
+
+### 2. Audit de Modification
+
+Chaque version est liée à un utilisateur (`uploaded_by`) et possède son propre horodatage (`uploaded_at`). Le cabinet sait exactement qui a produit quelle version du document et à quel moment.
+
+### 3. Récupération de Données (Rollback)
+
+En cas d'erreur de manipulation (upload du mauvais fichier), il est possible de restaurer une version précédente en un clic, sans perte de données.
+
+---
+
+## 🛠️ Implémentation dans l'API
+
+* **Lecture** : Par défaut, le Endpoint `/api/documents/` ne renvoie que les documents où `is_current_version=True`.
+* **Historique** : Un Endpoint spécifique `/api/documents/{id}/history/` permet de récupérer la "chaîne de vie" du document pour l'afficher dans l'interface Vue.js.
+
+---
+
+### ✅ Conclusion de la mise en place
+
+Maître, avec cette stratégie, votre GED ne se contente pas de stocker des fichiers : elle sécurise le patrimoine intellectuel de votre cabinet.
+
+
+frontend/
+├── public/
+│   └── favicon.ico
+├── src/
+│   ├── assets/
+│   │   ├── logo.png
+│   │   └── cabinet-bg.jpg          # Image de fond login
+│   ├── components/                  # Composants réutilisables
+│   │   ├── common/
+│   │   │   ├── AppCard.vue
+│   │   │   ├── AppAlert.vue
+│   │   │   └── LoadingSpinner.vue
+│   │   ├── layout/
+│   │   │   ├── Sidebar.vue
+│   │   │   ├── Header.vue
+│   │   │   └── Footer.vue
+│   │   └── dossier/
+│   │       ├── DossierCard.vue
+│   │       ├── DocumentTree.vue
+│   │       └── DocumentItem.vue
+│   ├── layouts/
+│   │   └── DefaultLayout.vue        # Layout principal avec sidebar
+│   ├── views/
+│   │   ├── Auth/
+│   │   │   └── LoginView.vue
+│   │   ├── DashboardView.vue
+│   │   ├── Client/
+│   │   │   ├── ClientListView.vue
+│   │   │   └── ClientDetailView.vue
+│   │   └── Dossier/
+│   │       ├── DossierListView.vue
+│   │       ├── DossierCreateView.vue
+│   │       └── DossierDetailView.vue
+│   ├── router/
+│   │   └── index.js
+│   ├── stores/
+│   │   ├── auth.js
+│   │   ├── dossier.js
+│   │   └── client.js
+│   ├── plugins/
+│   │   ├── axios.js
+│   │   └── vuetify.js
+│   ├── utils/
+│   │   ├── api.js                   # Wrapper Axios pour endpoints
+│   │   └── format.js                # Formatage dates, tailles fichiers, etc.
+│   ├── App.vue
+│   └── main.js
+├── vite.config.js
+├── package.json
+└── .env                             # Variables d'environnement (VITE_API_BASE_URL)
+
+
 
 === Application: django.contrib.admin ===
 
