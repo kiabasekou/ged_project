@@ -1,0 +1,297 @@
+import os
+import django
+from django.apps import apps
+
+# Initialiser Django
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")  # adapte "config.settings" à ton projet
+django.setup()
+
+# Fichier de sortie
+output_file = "django_models_details.txt"
+
+with open(output_file, "w", encoding="utf-8") as f:
+    for app_config in apps.get_app_configs():
+        f.write(f"\n=== Application: {app_config.name} ===\n")
+        for model in app_config.get_models():
+            f.write(f"\n--- Modèle: {model.__name__} ---\n")
+            f.write(f"Table: {model._meta.db_table}\n")
+            f.write("Champs:\n")
+            for field in model._meta.get_fields():
+                field_info = f"  - {field.name} ({field.__class__.__name__})"
+                if hasattr(field, "max_length") and field.max_length:
+                    field_info += f", max_length={field.max_length}"
+                if hasattr(field, "related_model") and field.related_model:
+                    field_info += f", relation -> {field.related_model.__name__}"
+                f.write(field_info + "\n")
+=== Application: django.contrib.admin ===
+
+--- Modèle: LogEntry ---
+Table: django_admin_log
+Champs:
+  - id (AutoField)
+  - action_time (DateTimeField)
+  - user (ForeignKey), relation -> User
+  - content_type (ForeignKey), relation -> ContentType
+  - object_id (TextField)
+  - object_repr (CharField), max_length=200
+  - action_flag (PositiveSmallIntegerField)
+  - change_message (TextField)
+
+=== Application: django.contrib.auth ===
+
+--- Modèle: Permission ---
+Table: auth_permission
+Champs:
+  - group (ManyToManyRel), relation -> Group
+  - userobjectpermission (ManyToOneRel), relation -> UserObjectPermission
+  - groupobjectpermission (ManyToOneRel), relation -> GroupObjectPermission
+  - user (ManyToManyRel), relation -> User
+  - id (AutoField)
+  - name (CharField), max_length=255
+  - content_type (ForeignKey), relation -> ContentType
+  - codename (CharField), max_length=100
+
+--- Modèle: Group ---
+Table: auth_group
+Champs:
+  - groupobjectpermission (ManyToOneRel), relation -> GroupObjectPermission
+  - user (ManyToManyRel), relation -> User
+  - id (AutoField)
+  - name (CharField), max_length=150
+  - permissions (ManyToManyField), relation -> Permission
+
+=== Application: django.contrib.contenttypes ===
+
+--- Modèle: ContentType ---
+Table: django_content_type
+Champs:
+  - logentry (ManyToOneRel), relation -> LogEntry
+  - permission (ManyToOneRel), relation -> Permission
+  - userobjectpermission (ManyToOneRel), relation -> UserObjectPermission
+  - groupobjectpermission (ManyToOneRel), relation -> GroupObjectPermission
+  - auditlog (ManyToOneRel), relation -> AuditLog
+  - id (AutoField)
+  - app_label (CharField), max_length=100
+  - model (CharField), max_length=100
+
+=== Application: django.contrib.sessions ===
+
+--- Modèle: Session ---
+Table: django_session
+Champs:
+  - session_key (CharField), max_length=40
+  - session_data (TextField)
+  - expire_date (DateTimeField)
+
+=== Application: django.contrib.messages ===
+
+=== Application: django.contrib.staticfiles ===
+
+=== Application: guardian ===
+
+--- Modèle: UserObjectPermission ---
+Table: guardian_userobjectpermission
+Champs:
+  - id (AutoField)
+  - permission (ForeignKey), relation -> Permission
+  - content_type (ForeignKey), relation -> ContentType
+  - object_pk (CharField), max_length=255
+  - user (ForeignKey), relation -> User
+  - content_object (GenericForeignKey)
+
+--- Modèle: GroupObjectPermission ---
+Table: guardian_groupobjectpermission
+Champs:
+  - id (AutoField)
+  - permission (ForeignKey), relation -> Permission
+  - content_type (ForeignKey), relation -> ContentType
+  - object_pk (CharField), max_length=255
+  - group (ForeignKey), relation -> Group
+  - content_object (GenericForeignKey)
+
+=== Application: rest_framework ===
+
+=== Application: rest_framework_simplejwt ===
+
+=== Application: corsheaders ===
+
+=== Application: django_filters ===
+
+=== Application: rest_framework_guardian ===
+
+=== Application: apps.core ===
+
+=== Application: apps.users ===
+
+--- Modèle: User ---
+Table: users_user
+Champs:
+  - logentry (ManyToOneRel), relation -> LogEntry
+  - userobjectpermission (ManyToOneRel), relation -> UserObjectPermission
+  - managed_dossiers (ManyToOneRel), relation -> Dossier
+  - accessible_dossiers (ManyToManyRel), relation -> Dossier
+  - created_folders (ManyToOneRel), relation -> Folder
+  - uploaded_documents (ManyToOneRel), relation -> Document
+  - audit_logs (ManyToOneRel), relation -> AuditLog
+  - created_events (ManyToOneRel), relation -> Event
+  - password (CharField), max_length=128
+  - last_login (DateTimeField)
+  - is_superuser (BooleanField)
+  - username (CharField), max_length=150
+  - first_name (CharField), max_length=150
+  - last_name (CharField), max_length=150
+  - email (EmailField), max_length=254
+  - is_staff (BooleanField)
+  - date_joined (DateTimeField)
+  - id (UUIDField), max_length=32
+  - role (CharField), max_length=20
+  - professional_id (CharField), max_length=50
+  - phone_number (CharField), max_length=20
+  - has_accepted_privacy_policy (BooleanField)
+  - privacy_policy_accepted_at (DateTimeField)
+  - created_at (DateTimeField)
+  - updated_at (DateTimeField)
+  - is_active (BooleanField)
+  - groups (ManyToManyField), relation -> Group
+  - user_permissions (ManyToManyField), relation -> Permission
+
+=== Application: apps.clients ===
+
+--- Modèle: Client ---
+Table: clients_client
+Champs:
+  - dossiers (ManyToOneRel), relation -> Dossier
+  - id (UUIDField), max_length=32
+  - client_type (CharField), max_length=10
+  - first_name (CharField), max_length=150
+  - last_name (CharField), max_length=150
+  - date_of_birth (DateField)
+  - place_of_birth (CharField), max_length=150
+  - ni_number (CharField), max_length=50
+  - ni_type (CharField), max_length=20
+  - company_name (CharField), max_length=255
+  - rccm (CharField), max_length=50
+  - nif (CharField), max_length=10
+  - representative_name (CharField), max_length=255
+  - representative_role (CharField), max_length=100
+  - email (EmailField), max_length=254
+  - phone_primary (CharField), max_length=20
+  - phone_secondary (CharField), max_length=20
+  - address_line (CharField), max_length=255
+  - neighborhood (CharField), max_length=100
+  - city (CharField), max_length=100
+  - country (CharField), max_length=100
+  - data_source (CharField), max_length=255
+  - consent_given (BooleanField)
+  - consent_date (DateTimeField)
+  - retention_period_years (PositiveIntegerField)
+  - created_at (DateTimeField)
+  - updated_at (DateTimeField)
+  - is_active (BooleanField)
+  - notes (TextField)
+
+=== Application: apps.dossiers ===
+
+--- Modèle: Dossier ---
+Table: dossiers_dossier
+Champs:
+  - folders (ManyToOneRel), relation -> Folder
+  - documents (ManyToOneRel), relation -> Document
+  - events (ManyToOneRel), relation -> Event
+  - id (UUIDField), max_length=32
+  - client (ForeignKey), relation -> Client
+  - responsible (ForeignKey), relation -> User
+  - title (CharField), max_length=300
+  - reference_code (CharField), max_length=30
+  - category (CharField), max_length=20
+  - status (CharField), max_length=15
+  - description (TextField)
+  - opponent (CharField), max_length=255
+  - jurisdiction (CharField), max_length=200
+  - critical_deadline (DateField)
+  - legal_basis (CharField), max_length=255
+  - retention_period_years (PositiveIntegerField)
+  - opening_date (DateField)
+  - closing_date (DateField)
+  - archived_date (DateTimeField)
+  - created_at (DateTimeField)
+  - updated_at (DateTimeField)
+  - assigned_users (ManyToManyField), relation -> User
+
+=== Application: apps.documents ===
+
+--- Modèle: Folder ---
+Table: documents_folder
+Champs:
+  - subfolders (ManyToOneRel), relation -> Folder
+  - documents (ManyToOneRel), relation -> Document
+  - id (UUIDField), max_length=32
+  - name (CharField), max_length=150
+  - dossier (ForeignKey), relation -> Dossier
+  - parent (ForeignKey), relation -> Folder
+  - created_at (DateTimeField)
+  - created_by (ForeignKey), relation -> User
+
+--- Modèle: Document ---
+Table: documents_document
+Champs:
+  - next_versions (ManyToOneRel), relation -> Document
+  - id (UUIDField), max_length=32
+  - dossier (ForeignKey), relation -> Dossier
+  - folder (ForeignKey), relation -> Folder
+  - uploaded_by (ForeignKey), relation -> User
+  - file (FileField), max_length=100
+  - title (CharField), max_length=300
+  - description (TextField)
+  - original_filename (CharField), max_length=255
+  - file_extension (CharField), max_length=10
+  - file_size (BigIntegerField)
+  - mime_type (CharField), max_length=100
+  - file_hash (CharField), max_length=64
+  - version (PositiveIntegerField)
+  - is_current_version (BooleanField)
+  - previous_version (ForeignKey), relation -> Document
+  - sensitivity (CharField), max_length=20
+  - retention_until (DateField)
+  - uploaded_at (DateTimeField)
+  - updated_at (DateTimeField)
+
+=== Application: apps.audit ===
+
+--- Modèle: AuditLog ---
+Table: audit_auditlog
+Champs:
+  - id (UUIDField), max_length=32
+  - user (ForeignKey), relation -> User
+  - content_type (ForeignKey), relation -> ContentType
+  - object_id (UUIDField), max_length=32
+  - object_repr (CharField), max_length=255
+  - action_type (CharField), max_length=20
+  - changes (JSONField)
+  - description (TextField)
+  - ip_address (GenericIPAddressField), max_length=39
+  - user_agent (TextField)
+  - request_path (CharField), max_length=500
+  - session_key (CharField), max_length=40
+  - timestamp (DateTimeField)
+  - content_object (GenericForeignKey)
+
+=== Application: apps.agenda ===
+
+--- Modèle: Event ---
+Table: agenda_event
+Champs:
+  - id (UUIDField), max_length=32
+  - title (CharField), max_length=255
+  - type (CharField), max_length=20
+  - start_date (DateField)
+  - start_time (TimeField)
+  - all_day (BooleanField)
+  - end_date (DateField)
+  - end_time (TimeField)
+  - location (CharField), max_length=255
+  - description (TextField)
+  - dossier (ForeignKey), relation -> Dossier
+  - created_by (ForeignKey), relation -> User
+  - created_at (DateTimeField)
+  - updated_at (DateTimeField)

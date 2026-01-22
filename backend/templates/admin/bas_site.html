@@ -1,0 +1,13 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }} | {{ site_title|default:"GED By SO Consulting" }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+  <a href="{% url 'admin:index' %}">
+    By SO Consulting — Libreville
+  </a>
+</h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
