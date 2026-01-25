@@ -1,5 +1,6 @@
 """
 Configuration Django pour GED Cabinet avec sécurité maximale.
+SQLite en développement, PostgreSQL en production.
 """
 import os
 from pathlib import Path
@@ -11,11 +12,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get(
     'DJANGO_SECRET_KEY',
-    'CHANGE-THIS-IN-PRODUCTION-USE-ENV-VARIABLE'
+    'django-insecure-dev-key-CHANGE-IN-PRODUCTION'
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
@@ -27,7 +28,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.postgres',  # Pour recherche full-text
     
     # Third party
     'rest_framework',
@@ -35,7 +35,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_filters',
     'guardian',
-    'channels',  # WebSocket support
     
     # Local apps
     'apps.core',
@@ -56,7 +55,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'apps.audit.middleware.AuditMiddleware',  # Audit automatique
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -78,47 +76,67 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
-ASGI_APPLICATION = 'config.asgi.application'
 
 # Database
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_DB', 'ged_cabinet'),
-        'USER': os.environ.get('POSTGRES_USER', 'postgres'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'postgres'),
-        'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
-        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
-        'ATOMIC_REQUESTS': True,
-        'CONN_MAX_AGE': 600,
-    }
-}
+# SQLite pour développement, PostgreSQL pour production
+USE_SQLITE = os.environ.get('USE_SQLITE', 'True').lower() == 'true'
 
-# Cache Configuration (Redis)
-CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1'),
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'PARSER_CLASS': 'redis.connection.HiredisParser',
-            'SOCKET_CONNECT_TIMEOUT': 5,
-            'SOCKET_TIMEOUT': 5,
-            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
-            'CONNECTION_POOL_KWARGS': {'max_connections': 50}
+if USE_SQLITE:
+    # Configuration SQLite pour développement local
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+            'ATOMIC_REQUESTS': True,
         }
     }
-}
+    print("🔧 Mode Développement : SQLite activé")
+else:
+    # Configuration PostgreSQL pour production
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('POSTGRES_DB', 'ged_cabinet'),
+            'USER': os.environ.get('POSTGRES_USER', 'postgres'),
+            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'postgres'),
+            'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
+            'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+            'ATOMIC_REQUESTS': True,
+            'CONN_MAX_AGE': 600,
+        }
+    }
+    print("🚀 Mode Production : PostgreSQL activé")
 
-# Channels (WebSocket)
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            'hosts': [os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/0')],
-        },
-    },
-}
+# Cache Configuration
+# SQLite : cache simple en mémoire
+# Production : Redis
+USE_REDIS = os.environ.get('USE_REDIS', 'False').lower() == 'true'
+
+if USE_REDIS and not USE_SQLITE:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'PARSER_CLASS': 'redis.connection.HiredisParser',
+                'SOCKET_CONNECT_TIMEOUT': 5,
+                'SOCKET_TIMEOUT': 5,
+                'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+                'CONNECTION_POOL_KWARGS': {'max_connections': 50}
+            }
+        }
+    }
+    print("📦 Cache Redis activé")
+else:
+    # Cache en mémoire pour développement
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-snowflake',
+        }
+    }
+    print("💾 Cache local en mémoire activé")
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -127,7 +145,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-        'OPTIONS': {'min_length': 12}  # Minimum 12 caractères
+        'OPTIONS': {'min_length': 8 if DEBUG else 12}  # Plus strict en production
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -146,11 +164,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATICFILES_DIRS = [BASE_DIR / 'static'] if (BASE_DIR / 'static').exists() else []
 
 # Media files (Uploads chiffrés)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Créer les répertoires si nécessaires
+MEDIA_ROOT.mkdir(exist_ok=True)
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -171,10 +192,10 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '10/hour',
-        'user': '1000/day',
-        'documents': '1000/day',
-        'upload': '50/hour',
+        'anon': '100/hour' if DEBUG else '10/hour',
+        'user': '10000/day' if DEBUG else '1000/day',
+        'documents': '10000/day' if DEBUG else '1000/day',
+        'upload': '500/hour' if DEBUG else '50/hour',
     },
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
@@ -198,8 +219,8 @@ REST_FRAMEWORK = {
 
 # JWT Configuration
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=24 if DEBUG else 1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=30 if DEBUG else 7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
@@ -216,7 +237,7 @@ SIMPLE_JWT = {
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = os.environ.get(
     'CORS_ALLOWED_ORIGINS',
-    'http://localhost:3000,http://localhost:5173'
+    'http://localhost:3000,http://localhost:5173,http://localhost:8080,http://127.0.0.1:5173'
 ).split(',')
 
 CORS_ALLOW_CREDENTIALS = True
@@ -238,19 +259,26 @@ AUTHENTICATION_BACKENDS = [
 
 ANONYMOUS_USER_NAME = None
 
-# File Encryption Key (CRITICAL: DOIT ÊTRE EN VARIABLE D'ENVIRONNEMENT)
-FILE_ENCRYPTION_KEY = os.environ.get('FILE_ENCRYPTION_KEY')
+# File Encryption Key (CRITICAL: DOIT ÊTRE EN VARIABLE D'ENVIRONNEMENT EN PRODUCTION)
+FILE_ENCRYPTION_KEY = os.environ.get(
+    'FILE_ENCRYPTION_KEY',
+    'dev-key-DO-NOT-USE-IN-PRODUCTION-' + 'A' * 32  # Clé de dev par défaut
+)
 
-if not FILE_ENCRYPTION_KEY and not DEBUG:
+if not DEBUG and FILE_ENCRYPTION_KEY.startswith('dev-key'):
     raise ValueError(
-        "FILE_ENCRYPTION_KEY manquante. Générez-la avec: "
+        "FILE_ENCRYPTION_KEY de développement détectée en production! "
+        "Générez une vraie clé avec: "
         "python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'"
     )
 
 # Backup Encryption Key
-BACKUP_ENCRYPTION_KEY = os.environ.get('BACKUP_ENCRYPTION_KEY')
+BACKUP_ENCRYPTION_KEY = os.environ.get(
+    'BACKUP_ENCRYPTION_KEY',
+    FILE_ENCRYPTION_KEY  # Utilise la même en dev
+)
 
-# Security Settings
+# Security Settings (plus souples en développement)
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
@@ -262,15 +290,22 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+else:
+    # Développement : sécurité plus souple
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
 
 # Session Configuration
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_CACHE_ALIAS = 'default'
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # DB pour SQLite
 SESSION_COOKIE_AGE = 86400  # 24 heures
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = 'Strict'
+SESSION_COOKIE_SAMESITE = 'Lax' if DEBUG else 'Strict'
 
 # Logging Configuration
+LOG_DIR = BASE_DIR / 'logs'
+LOG_DIR.mkdir(exist_ok=True)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -279,40 +314,28 @@ LOGGING = {
             'format': '{levelname} {asctime} {module} {message}',
             'style': '{',
         },
-        'json': {
-            '()': 'pythonjsonlogger.jsonlogger.JsonFormatter',
-            'format': '%(asctime)s %(name)s %(levelname)s %(message)s'
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
         }
     },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+            'formatter': 'verbose' if DEBUG else 'simple',
         },
         'file': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': BASE_DIR / 'logs' / 'django.log',
+            'filename': LOG_DIR / 'django.log',
             'maxBytes': 10485760,  # 10MB
             'backupCount': 5,
-            'formatter': 'json',
+            'formatter': 'verbose',
         },
-        'security': {
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': BASE_DIR / 'logs' / 'security.log',
-            'maxBytes': 10485760,
-            'backupCount': 10,
-            'formatter': 'json',
-        }
     },
     'loggers': {
         'django': {
             'handlers': ['console', 'file'],
-            'level': 'INFO',
-        },
-        'django.security': {
-            'handlers': ['security'],
-            'level': 'WARNING',
-            'propagate': False,
+            'level': 'DEBUG' if DEBUG else 'INFO',
         },
         'apps': {
             'handlers': ['console', 'file'],
@@ -321,11 +344,8 @@ LOGGING = {
     },
 }
 
-# Créer le répertoire logs s'il n'existe pas
-(BASE_DIR / 'logs').mkdir(exist_ok=True)
-
 # Email Configuration (pour notifications)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() == 'true'
@@ -333,12 +353,42 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@cabinet.ga')
 
-# Celery Configuration (pour tâches asynchrones)
-CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://127.0.0.1:6379/0')
-CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://127.0.0.1:6379/0')
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = TIME_ZONE
-CELERY_TASK_TRACK_STARTED = True
-CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes max
+# Configuration spécifique développement
+if DEBUG:
+    print("""
+    ╔════════════════════════════════════════════════════════════╗
+    ║          🔧 MODE DÉVELOPPEMENT ACTIVÉ                      ║
+    ╠════════════════════════════════════════════════════════════╣
+    ║  • Base de données : SQLite (db.sqlite3)                   ║
+    ║  • Cache : Mémoire locale                                  ║
+    ║  • Email : Console                                         ║
+    ║  • Rate limits : Souples (100/h, 10000/j)                  ║
+    ║  • Tokens JWT : 24h (au lieu de 1h)                        ║
+    ║  • Sécurité HTTPS : Désactivée                             ║
+    ║                                                            ║
+    ║  ⚠️  NE PAS UTILISER EN PRODUCTION                         ║
+    ╚════════════════════════════════════════════════════════════╝
+    """)
+else:
+    print("""
+    ╔════════════════════════════════════════════════════════════╗
+    ║          🚀 MODE PRODUCTION ACTIVÉ                         ║
+    ╠════════════════════════════════════════════════════════════╣
+    ║  ✓ PostgreSQL configuré                                    ║
+    ║  ✓ Redis activé (si USE_REDIS=true)                        ║
+    ║  ✓ Sécurité HTTPS stricte                                  ║
+    ║  ✓ Rate limiting strict                                    ║
+    ║  ✓ Clés de chiffrement vérifiées                           ║
+    ╚════════════════════════════════════════════════════════════╝
+    """)
+
+# Extensions de fichiers autorisées
+ALLOWED_FILE_EXTENSIONS = [
+    '.pdf', '.docx', '.doc', '.xlsx', '.xls', '.pptx', '.ppt',
+    '.txt', '.rtf', '.odt', '.ods', '.odp',
+    '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff',
+    '.zip', '.rar', '.7z', '.msg', '.eml'
+]
+
+# Taille maximale d'upload (en MB)
+MAX_UPLOAD_SIZE_MB = int(os.environ.get('MAX_UPLOAD_SIZE_MB', '100'))

@@ -226,7 +226,7 @@ class Migration(migrations.Migration):
                 ],
                 "constraints": [
                     models.CheckConstraint(
-                        condition=models.Q(
+                        check=models.Q(
                             ("closing_date__gte", models.F("opening_date")),
                             ("closing_date__isnull", True),
                             _connector="OR",

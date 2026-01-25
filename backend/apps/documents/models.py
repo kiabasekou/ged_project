@@ -1,5 +1,5 @@
 """
-Modèle Document avec versionnage immuable et stockage chiffré.
+Modèle Document avec versionnage immuable et chiffrement.
 Garantit l'intégrité et la traçabilité complète des pièces du cabinet.
 """
 import hashlib
@@ -13,6 +13,25 @@ from django.conf import settings
 
 from apps.core.models import BaseModel
 from .storage import AuditedFileStorage
+
+
+def secure_document_upload_path(instance, filename):
+    """
+    Génère un chemin sécurisé pour l'upload de documents.
+    Format: documents/{dossier_id}/{annee}/{mois}/{uuid}_{filename}
+    
+    Note: Cette fonction est utilisée comme fallback. 
+    Le stockage chiffré (AuditedFileStorage) gère le vrai chemin.
+    """
+    import datetime
+    
+    now = datetime.datetime.now()
+    dossier_id = instance.dossier.id if instance.dossier else 'no-dossier'
+    
+    # Nom de fichier sécurisé
+    safe_filename = f"{uuid.uuid4().hex}_{filename}"
+    
+    return f"documents/{dossier_id}/{now.year}/{now.month:02d}/{safe_filename}"
 
 
 class Folder(BaseModel):
@@ -125,7 +144,7 @@ class Document(BaseModel):
     
     # Stockage chiffré
     file = models.FileField(
-        upload_to='documents/',
+        upload_to=secure_document_upload_path,
         storage=AuditedFileStorage(),
         verbose_name="Fichier"
     )

@@ -63,6 +63,14 @@ Champs:
 
 === Application: django.contrib.staticfiles ===
 
+=== Application: rest_framework ===
+
+=== Application: rest_framework_simplejwt ===
+
+=== Application: corsheaders ===
+
+=== Application: django_filters ===
+
 === Application: guardian ===
 
 --- Modèle: UserObjectPermission ---
@@ -84,16 +92,6 @@ Champs:
   - object_pk (CharField), max_length=255
   - group (ForeignKey), relation -> Group
   - content_object (GenericForeignKey)
-
-=== Application: rest_framework ===
-
-=== Application: rest_framework_simplejwt ===
-
-=== Application: corsheaders ===
-
-=== Application: django_filters ===
-
-=== Application: rest_framework_guardian ===
 
 === Application: apps.core ===
 
@@ -201,17 +199,21 @@ Table: documents_folder
 Champs:
   - subfolders (ManyToOneRel), relation -> Folder
   - documents (ManyToOneRel), relation -> Document
+  - updated_at (DateTimeField)
+  - is_active (BooleanField)
   - id (UUIDField), max_length=32
   - name (CharField), max_length=150
   - dossier (ForeignKey), relation -> Dossier
   - parent (ForeignKey), relation -> Folder
-  - created_at (DateTimeField)
   - created_by (ForeignKey), relation -> User
+  - created_at (DateTimeField)
 
 --- Modèle: Document ---
 Table: documents_document
 Champs:
   - next_versions (ManyToOneRel), relation -> Document
+  - created_at (DateTimeField)
+  - is_active (BooleanField)
   - id (UUIDField), max_length=32
   - dossier (ForeignKey), relation -> Dossier
   - folder (ForeignKey), relation -> Folder
@@ -244,6 +246,7 @@ Champs:
   - object_repr (CharField), max_length=255
   - action_type (CharField), max_length=20
   - changes (JSONField)
+  - sensitive_fields_hash (JSONField)
   - description (TextField)
   - ip_address (GenericIPAddressField), max_length=39
   - user_agent (TextField)
