@@ -1,0 +1,102 @@
+# ====================
+# Core Django
+# ====================
+Django==4.2.7
+django-environ==0.11.2
+psycopg2-binary==2.9.9
+
+# ====================
+# Django REST Framework
+# ====================
+djangorestframework==3.14.0
+djangorestframework-simplejwt==5.3.0
+django-filter==23.3
+django-cors-headers==4.3.0
+
+# ====================
+# Permissions granulaires
+# ====================
+django-guardian==2.4.0
+
+# ====================
+# Chiffrement et sécurité
+# ====================
+cryptography==41.0.5
+pycryptodome==3.19.0
+
+# ====================
+# Cache et Async
+# ====================
+redis==5.0.1
+django-redis==5.4.0
+hiredis==2.2.3
+celery==5.3.4
+django-celery-beat==2.5.0
+
+# ====================
+# WebSocket (Notifications temps réel)
+# ====================
+channels==4.0.0
+channels-redis==4.1.0
+daphne==4.0.0
+
+# ====================
+# PostgreSQL Full-Text Search
+# ====================
+django-postgres-extra==2.0.8
+
+# ====================
+# Validation et formats
+# ====================
+Pillow==10.1.0
+python-magic==0.4.27
+python-dateutil==2.8.2
+
+# ====================
+# API et Documentation
+# ====================
+drf-spectacular==0.26.5
+drf-spectacular[sidecar]==0.26.5
+
+# ====================
+# Monitoring et Logging
+# ====================
+sentry-sdk==1.38.0
+python-json-logger==2.0.7
+
+# ====================
+# Production Server
+# ====================
+gunicorn==21.2.0
+whitenoise==6.6.0
+
+# ====================
+# Testing
+# ====================
+pytest==7.4.3
+pytest-django==4.7.0
+pytest-cov==4.1.0
+factory-boy==3.3.0
+faker==20.1.0
+
+# ====================
+# Code Quality
+# ====================
+black==23.11.0
+flake8==6.1.0
+isort==5.12.0
+pylint==3.0.3
+mypy==1.7.1
+django-stubs==4.2.6
+
+# ====================
+# Backup et Export
+# ====================
+boto3==1.29.7  # AWS S3
+django-storages==1.14.2
+
+# ====================
+# Utils
+# ====================
+python-dotenv==1.0.0
+requests==2.31.0

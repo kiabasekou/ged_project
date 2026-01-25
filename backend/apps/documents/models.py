@@ -1,266 +1,325 @@
-import os
-import uuid
+"""
+Modèle Document avec versionnage immuable et stockage chiffré.
+Garantit l'intégrité et la traçabilité complète des pièces du cabinet.
+"""
 import hashlib
-from django.core.validators import FileExtensionValidator
+import uuid
+from pathlib import Path
+
 from django.db import models
-from django.conf import settings
-from django.utils import timezone
-from django.utils.text import get_valid_filename
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from apps.dossiers.models import Dossier
+from django.conf import settings
+
+from apps.core.models import BaseModel
+from .storage import AuditedFileStorage
 
 
-def secure_document_upload_path(instance, filename):
-    """
-    Chemin sécurisé et isolé par dossier :
-    media/dossiers/<dossier_uuid>/<sous-dossier_uuid_ou_root>/<nom_fichier_sécurisé>
-    """
-    # Nettoyage du nom de fichier pour éviter attaques path traversal
-    safe_filename = get_valid_filename(filename)
-    dossier_uuid = instance.dossier.id
-
-    if instance.folder and instance.folder.id:
-        folder_part = str(instance.folder.id)
-    else:
-        folder_part = "root"
-
-    # Ajout d'un UUID pour éviter les collisions et deviner les noms
-    name, ext = os.path.splitext(safe_filename)
-    unique_filename = f"{uuid.uuid4()}_{name}{ext}"
-
-    return f"dossiers/{dossier_uuid}/{folder_part}/{unique_filename}"
-
-
-class Folder(models.Model):
-    """
-    Répertoire virtuel à l'intérieur d'un dossier juridique.
-    Permet une arborescence logique sans refléter le stockage physique.
-    """
+class Folder(BaseModel):
+    """Structure hiérarchique pour organiser les documents"""
+    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=150, verbose_name=_("Nom du répertoire"))
+    name = models.CharField(max_length=150, verbose_name="Nom du dossier")
+    
     dossier = models.ForeignKey(
-        Dossier,
+        'dossiers.Dossier',
         on_delete=models.CASCADE,
-        related_name="folders"
+        related_name='folders',
+        verbose_name="Dossier juridique"
     )
+    
     parent = models.ForeignKey(
         'self',
         on_delete=models.CASCADE,
+        related_name='subfolders',
         null=True,
         blank=True,
-        related_name="subfolders"
+        verbose_name="Dossier parent"
     )
-    created_at = models.DateTimeField(default=timezone.now)
+    
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name="created_folders"
+        on_delete=models.PROTECT,
+        related_name='created_folders',
+        verbose_name="Créé par"
     )
-
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
     class Meta:
-        verbose_name = _("Répertoire virtuel")
-        verbose_name_plural = _("Répertoires virtuels")
-        unique_together = ('name', 'dossier', 'parent')
+        db_table = 'documents_folder'
+        verbose_name = "Dossier"
+        verbose_name_plural = "Dossiers"
         ordering = ['name']
-        indexes = [
-            models.Index(fields=['dossier', 'parent']),
+        constraints = [
+            # Éviter les boucles infinies dans la hiérarchie
+            models.CheckConstraint(
+                check=~models.Q(id=models.F('parent_id')),
+                name='folder_no_self_parent'
+            )
         ]
-
+    
     def __str__(self):
-        return self.name
+        return f"{self.dossier.reference_code}/{self.get_full_path()}"
+    
+    def get_full_path(self) -> str:
+        """Retourne le chemin complet du dossier"""
+        path_parts = [self.name]
+        current = self.parent
+        
+        while current:
+            path_parts.insert(0, current.name)
+            current = current.parent
+        
+        return '/'.join(path_parts)
+    
+    def clean(self):
+        """Validation personnalisée"""
+        super().clean()
+        
+        # Vérifier que le parent appartient au même dossier juridique
+        if self.parent and self.parent.dossier_id != self.dossier_id:
+            raise ValidationError({
+                'parent': "Le dossier parent doit appartenir au même dossier juridique"
+            })
 
-    @property
-    def full_path(self):
-        """Retourne le chemin complet du dossier (ex: Contrats / 2024 / Fournisseurs)"""
-        path = [self.name]
-        parent = self.parent
-        while parent:
-            path.append(parent.name)
-            parent = parent.parent
-        return " / ".join(reversed(path))
 
-    def get_absolute_path(self):
-        """Pour affichage dans l'interface Vue"""
-        return self.full_path
-
-
-class Document(models.Model):
+class Document(BaseModel):
     """
-    Modèle GED principal : fichier physique + métadonnées riches + versioning par instance.
-    Conforme secret professionnel et Loi gabonaise 001/2011 mod. 2023.
+    Document avec versionnage immuable et chiffrement.
+    Chaque modification crée une nouvelle version liée à la précédente.
     """
-
-    class SensitivityLevel(models.TextChoices):
-        NORMAL = "NORMAL", _("Normal")
-        CONFIDENTIAL = "CONFIDENTIEL", _("Confidentiel")
-        HIGHLY_CONFIDENTIAL = "TRES_CONFIDENTIEL", _("Très confidentiel (secret professionnel renforcé)")
-
+    
+    SENSITIVITY_CHOICES = [
+        ('public', 'Public'),
+        ('internal', 'Usage Interne'),
+        ('confidential', 'Confidentiel'),
+        ('secret', 'Secret Professionnel'),
+    ]
+    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
+    
     # Relations
     dossier = models.ForeignKey(
-        Dossier,
-        on_delete=models.PROTECT,  # Empêche suppression accidentelle
-        related_name="documents"
+        'dossiers.Dossier',
+        on_delete=models.CASCADE,
+        related_name='documents',
+        verbose_name="Dossier juridique"
     )
+    
     folder = models.ForeignKey(
         Folder,
         on_delete=models.SET_NULL,
+        related_name='documents',
         null=True,
         blank=True,
-        related_name="documents",
-        verbose_name=_("Répertoire virtuel")
+        verbose_name="Sous-dossier"
     )
+    
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name="uploaded_documents",
-        verbose_name=_("Téléversé par")
+        on_delete=models.PROTECT,
+        related_name='uploaded_documents',
+        verbose_name="Uploadé par"
     )
-
-    # Fichier physique
+    
+    # Stockage chiffré
     file = models.FileField(
-        upload_to=secure_document_upload_path,
-        validators=[
-            FileExtensionValidator(allowed_extensions=[
-                'pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png',
-                'txt', 'rtf', 'msg', 'eml', 'zip'
-            ])
-        ],
-        verbose_name=_("Fichier")
+        upload_to='documents/',
+        storage=AuditedFileStorage(),
+        verbose_name="Fichier"
     )
-
-    # Métadonnées descriptives
-    title = models.CharField(max_length=300, verbose_name=_("Titre du document"))
-    description = models.TextField(blank=True, verbose_name=_("Description / Notes"))
-
-    # Métadonnées techniques automatiques
-    original_filename = models.CharField(max_length=255, blank=True, verbose_name=_("Nom original"))
-    file_extension = models.CharField(max_length=10, blank=True, editable=False)
-    file_size = models.BigIntegerField(null=True, blank=True, verbose_name=_("Taille (octets)"))
-    mime_type = models.CharField(max_length=100, blank=True, editable=False)
-    file_hash = models.CharField(max_length=64, blank=True, editable=False)  # SHA-256 pour intégrité
-
-    # Versioning : nouvelle instance à chaque modification importante
-    version = models.PositiveIntegerField(default=1)
-    is_current_version = models.BooleanField(default=True, verbose_name=_("Version actuelle"))
+    
+    # Métadonnées
+    title = models.CharField(max_length=300, verbose_name="Titre")
+    description = models.TextField(blank=True, verbose_name="Description")
+    original_filename = models.CharField(max_length=255, verbose_name="Nom original")
+    file_extension = models.CharField(max_length=10, verbose_name="Extension")
+    file_size = models.BigIntegerField(verbose_name="Taille (octets)")
+    mime_type = models.CharField(max_length=100, verbose_name="Type MIME")
+    
+    # Intégrité cryptographique
+    file_hash = models.CharField(
+        max_length=64,
+        unique=True,
+        verbose_name="Hash SHA-256",
+        help_text="Empreinte cryptographique garantissant l'intégrité"
+    )
+    
+    # Versionnage immuable
+    version = models.PositiveIntegerField(default=1, verbose_name="Numéro de version")
+    is_current_version = models.BooleanField(
+        default=True,
+        verbose_name="Version actuelle",
+        help_text="True uniquement pour la dernière version"
+    )
+    
     previous_version = models.ForeignKey(
         'self',
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
+        related_name='next_versions',
         null=True,
         blank=True,
-        related_name="next_versions"
+        verbose_name="Version précédente"
     )
-
-    # Sécurité et conformité
+    
+    # Sécurité et rétention
     sensitivity = models.CharField(
         max_length=20,
-        choices=SensitivityLevel.choices,
-        default=SensitivityLevel.NORMAL,
-        verbose_name=_("Niveau de confidentialité")
+        choices=SENSITIVITY_CHOICES,
+        default='internal',
+        verbose_name="Niveau de sensibilité"
     )
-
+    
     retention_until = models.DateField(
         null=True,
         blank=True,
-        verbose_name=_("Date de fin de conservation légale"),
-        help_text=_("Au-delà : archivage ou destruction sécurisée")
+        verbose_name="Conservation jusqu'au",
+        help_text="Date de suppression automatique (RGPD)"
     )
-
-    # Dates
-    uploaded_at = models.DateTimeField(default=timezone.now, verbose_name=_("Date de téléversement"))
-    updated_at = models.DateTimeField(auto_now=True)
-
+    
+    # Timestamps
+    uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name="Uploadé le")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Modifié le")
+    
     class Meta:
-        verbose_name = _("Document")
-        verbose_name_plural = _("Documents")
-        ordering = ['-uploaded_at', 'title']
+        db_table = 'documents_document'
+        verbose_name = "Document"
+        verbose_name_plural = "Documents"
+        ordering = ['-uploaded_at']
         indexes = [
-            models.Index(fields=['dossier', 'folder']),
-            models.Index(fields=['title']),
+            models.Index(fields=['dossier', 'is_current_version']),
+            models.Index(fields=['file_hash']),
             models.Index(fields=['uploaded_at']),
-            models.Index(fields=['sensitivity']),
-            models.Index(fields=['file_extension']),
+            models.Index(fields=['original_filename']),
         ]
-        permissions = [
-            ("can_view_confidential_docs", _("Peut consulter les documents confidentiels")),
-            ("can_delete_documents", _("Peut supprimer définitivement des documents")),
+        constraints = [
+            # Une seule version courante par nom de fichier et dossier
+            models.UniqueConstraint(
+                fields=['dossier', 'original_filename'],
+                condition=models.Q(is_current_version=True),
+                name='unique_current_version_per_dossier'
+            ),
+            # Version 1 ne doit pas avoir de précédente
+            models.CheckConstraint(
+                check=(
+                    models.Q(version=1, previous_version__isnull=True) |
+                    models.Q(version__gt=1, previous_version__isnull=False)
+                ),
+                name='version_integrity_check'
+            ),
+            # Les versions courantes doivent avoir previous_version (sauf v1)
+            models.CheckConstraint(
+                check=(
+                    models.Q(is_current_version=False) |
+                    models.Q(is_current_version=True, version=1, previous_version__isnull=True) |
+                    models.Q(is_current_version=True, version__gt=1, previous_version__isnull=False)
+                ),
+                name='current_version_must_have_history'
+            ),
         ]
-
+    
     def __str__(self):
-        return f"{self.title} (v{self.version}) - {self.dossier.reference_code}"
-
-    @property
-    def display_name(self):
-        return self.title or self.original_filename or "Document sans titre"
-
-    @property
-    def folder_path(self):
-        if self.folder:
-            return self.folder.full_path
-        return _("Racine")
-
-    def compute_hash(self):
-        """Calcule le SHA-256 du fichier pour vérification d'intégrité"""
-        if not self.file:
-            return ""
-        hash_sha256 = hashlib.sha256()
-        self.file.seek(0)
-        for chunk in self.file.chunks():
-            hash_sha256.update(chunk)
-        self.file.seek(0)
-        return hash_sha256.hexdigest()
-
+        return f"{self.title} (v{self.version})"
+    
     def save(self, *args, **kwargs):
-        # Extraction métadonnées au premier upload
-        if self.file and not self.pk:
-            self.original_filename = os.path.basename(self.file.name)
-            name, ext = os.path.splitext(self.original_filename)
-            self.file_extension = ext.lower().lstrip('.')
-            self.file_size = self.file.size
-            self.file_hash = self.compute_hash()
-
-            # MIME type basique (améliorable avec python-magic)
-            if self.file_extension in ['pdf']:
-                self.mime_type = 'application/pdf'
-            elif self.file_extension in ['doc', 'docx']:
-                self.mime_type = 'application/msword'
-            elif self.file_extension in ['jpg', 'jpeg']:
-                self.mime_type = 'image/jpeg'
-            elif self.file_extension == 'png':
-                self.mime_type = 'image/png'
-            else:
-                self.mime_type = 'application/octet-stream'
-
-        # Gestion retention par défaut (ex: 10 ans après clôture dossier)
-        if not self.retention_until and self.dossier.closing_date:
-            from dateutil.relativedelta import relativedelta
-            self.retention_until = self.dossier.closing_date + relativedelta(years=self.dossier.retention_period_years)
-
+        """Calcul automatique du hash et des métadonnées"""
+        if self.file and not self.file_hash:
+            # Calcul du hash SHA-256
+            self.file.seek(0)
+            file_content = self.file.read()
+            self.file_hash = hashlib.sha256(file_content).hexdigest()
+            self.file.seek(0)
+            
+            # Extraction des métadonnées si non définies
+            if not self.original_filename:
+                self.original_filename = Path(self.file.name).name
+            
+            if not self.file_extension:
+                self.file_extension = Path(self.file.name).suffix.lower()
+            
+            if not self.file_size:
+                self.file_size = self.file.size
+        
         super().save(*args, **kwargs)
-
-    def create_new_version(self, new_file, user):
+    
+    def clean(self):
+        """Validations métier"""
+        super().clean()
+        
+        # Vérifier que folder appartient au même dossier
+        if self.folder and self.folder.dossier_id != self.dossier_id:
+            raise ValidationError({
+                'folder': "Le sous-dossier doit appartenir au même dossier juridique"
+            })
+        
+        # Vérifier la cohérence du versionnage
+        if self.previous_version:
+            if self.previous_version.dossier_id != self.dossier_id:
+                raise ValidationError({
+                    'previous_version': "La version précédente doit appartenir au même dossier"
+                })
+            
+            if self.version != self.previous_version.version + 1:
+                raise ValidationError({
+                    'version': f"Version incohérente (attendu: {self.previous_version.version + 1})"
+                })
+    
+    def create_new_version(self, new_file, uploaded_by, **metadata):
         """
-        Crée une nouvelle version du document (utilisé lors de modification).
-        L'ancienne devient non actuelle.
+        Crée une nouvelle version de ce document.
+        Marque l'actuelle comme ancienne.
+        
+        Args:
+            new_file: Nouveau fichier à uploader
+            uploaded_by: Utilisateur effectuant l'upload
+            **metadata: Métadonnées supplémentaires (title, description, etc.)
+            
+        Returns:
+            La nouvelle version du document
         """
-        # Marquer l'ancienne comme non actuelle
+        if not self.is_current_version:
+            raise ValidationError("Impossible de créer une version depuis une version non-courante")
+        
+        # Archivage de la version actuelle
         self.is_current_version = False
         self.save(update_fields=['is_current_version'])
-
-        # Créer la nouvelle version
-        new_doc = Document.objects.create(
+        
+        # Création de la nouvelle version
+        new_version = Document(
             dossier=self.dossier,
             folder=self.folder,
-            uploaded_by=user,
+            uploaded_by=uploaded_by,
             file=new_file,
-            title=self.title,
-            description=self.description,
-            sensitivity=self.sensitivity,
-            retention_until=self.retention_until,
+            original_filename=metadata.get('original_filename', self.original_filename),
+            title=metadata.get('title', self.title),
+            description=metadata.get('description', self.description),
+            sensitivity=metadata.get('sensitivity', self.sensitivity),
+            retention_until=metadata.get('retention_until', self.retention_until),
             version=self.version + 1,
+            is_current_version=True,
             previous_version=self
         )
-        return new_doc
+        
+        new_version.save()
+        return new_version
+    
+    def get_version_history(self):
+        """Retourne la chaîne complète des versions (de la plus récente à la plus ancienne)"""
+        history = [self]
+        current = self.previous_version
+        
+        while current:
+            history.append(current)
+            current = current.previous_version
+        
+        return history
+    
+    def verify_integrity(self) -> bool:
+        """Vérifie que le fichier n'a pas été altéré"""
+        return self.file.storage.verify_integrity(self.file.name, self.file_hash)
+    
+    def get_absolute_url(self):
+        """URL de téléchargement du document"""
+        from django.urls import reverse
+        return reverse('document-download', kwargs={'pk': self.pk})
