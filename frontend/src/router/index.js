@@ -1,3 +1,5 @@
+// frontend/src/router/index.js - VERSION COMPLÈTE AVEC NOUVELLES ROUTES
+
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
@@ -13,29 +15,27 @@ const routes = [
     component: () => import('@/layouts/DefaultLayout.vue'),
     meta: { requiresAuth: true },
     children: [
+      // Dashboard
       {
         path: '', 
         name: 'Dashboard',
         component: () => import('@/views/DashboardView.vue')
       },
+      
+      // Dossiers
       {
         path: 'dossiers',
         name: 'DossierList',
         component: () => import('@/views/Dossier/DossierListView.vue')
       },
-      // CORRECTION : Retrait du slash initial pour cohérence
-      {
-        path: 'agenda',
-        name: 'Agenda',
-        component: () => import('@/views/AgendaView.vue')
-      },
-      // CORRECTION : On s'assure que :id respecte un format UUID pour ne pas matcher "create"
       {
         path: 'dossiers/:id',
         name: 'DossierDetail',
         component: () => import('@/views/Dossier/DossierDetailView.vue'),
         props: true
       },
+      
+      // Clients
       {
         path: 'clients',
         name: 'ClientList',
@@ -52,6 +52,53 @@ const routes = [
         component: () => import('@/views/Client/ClientDetailView.vue'),
         props: true
       },
+      
+      // Documents - NOUVEAU
+      {
+        path: 'documents/upload',
+        name: 'DocumentUpload',
+        component: () => import('@/views/Document/DocumentUploadView.vue'),
+        meta: { 
+          title: 'Ajouter un document',
+          requiresAuth: true 
+        }
+      },
+      
+      // Agenda
+      {
+        path: 'agenda',
+        name: 'Agenda',
+        component: () => import('@/views/AgendaView.vue')
+      },
+      // Événements - NOUVEAU
+      {
+        path: 'agenda/create',
+        name: 'EventCreate',
+        component: () => import('@/views/Agenda/EventCreateView.vue'),
+        meta: { 
+          title: 'Nouvel événement',
+          requiresAuth: true 
+        }
+      },
+      {
+        path: 'documents',
+        name: 'DocumentList',
+        component: () => import('@/views/Document/DocumentListView.vue'),
+        meta: { 
+          title: 'Documents',
+          requiresAuth: true 
+        }
+      },
+      {
+        path: 'documents/:id',
+        name: 'DocumentDetail',
+        component: () => import('@/views/Document/DocumentDetailView.vue'),
+        props: true,
+        meta: { 
+          title: 'Détail du document',
+          requiresAuth: true 
+        }
+      }
     ]
   },
   {
@@ -65,21 +112,24 @@ const router = createRouter({
   routes
 })
 
-// Garde de navigation renforcée
+// Garde de navigation
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
   
-  // 1% Best Practice : Attendre que le store soit initialisé (si vous avez une méthode init)
-  // ou vérifier manuellement le token si le store est vide
+  // Vérifier si token existe mais user pas encore chargé
   if (!authStore.user && localStorage.getItem('token')) {
-    // Optionnel : await authStore.fetchCurrentUser()
+    try {
+      await authStore.fetchCurrentUser()
+    } catch (error) {
+      console.error('Erreur chargement utilisateur:', error)
+    }
   }
 
   const isAuthenticated = authStore.isAuthenticated
-  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth !== false)
 
   if (requiresAuth && !isAuthenticated) {
-    next({ name: 'Login', query: { redirect: to.fullPath } }) // On garde en mémoire où l'utilisateur voulait aller
+    next({ name: 'Login', query: { redirect: to.fullPath } })
   } else if (to.name === 'Login' && isAuthenticated) {
     next({ name: 'Dashboard' })
   } else {

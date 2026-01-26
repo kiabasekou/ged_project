@@ -3,7 +3,7 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '@/plugins/axios'
 import { useAuthStore } from '@/stores/auth'
-import DocumentUpload from '@/components/dossier/DocumentUpload.vue'
+import DocumentUpload from '@/components/dossier/DocumentUpload.vue' // Assurez-vous que le chemin est bon
 
 const route = useRoute()
 const router = useRouter()
@@ -13,14 +13,15 @@ const authStore = useAuthStore()
 const dossier = ref({ status: 'OUVERT', title: '' })
 const folders = ref([])
 const documents = ref([])
-const selectedFolderId = ref([]) // Vuetify 3 utilise un tableau pour la sélection
+const selectedFolderId = ref([]) 
 const loading = ref(true)
 const tab = ref('info')
+const showUploadDialog = ref(false) // <--- NOUVEAU : Contrôle la modale
 
 // Déterminer si nous sommes en mode création
 const isCreateMode = computed(() => route.params.id === 'create')
 
-// Récupérer le dossier sélectionné à partir de son ID
+// Récupérer le dossier sélectionné (Computed)
 const selectedFolder = computed(() => {
   if (!selectedFolderId.value.length) return null
   const findFolder = (list, id) => {
@@ -40,17 +41,16 @@ onMounted(async () => {
   if (!isCreateMode.value) {
     await fetchDossierDetail()
   } else {
-    loading.value = false // On arrête le chargement immédiatement en mode création
+    loading.value = false
   }
 })
 
 const fetchDossierDetail = async () => {
   const id = route.params.id
-  if (!id || id === 'create') return // Sécurité supplémentaire
+  if (!id || id === 'create') return
 
   loading.value = true
   try {
-    // Appels parallèles optimisés
     const [dossierRes, foldersRes, docsRes] = await Promise.all([
       api.get(`/dossiers/${id}/`),
       api.get(`/documents/folders/`, { params: { dossier: id } }),
@@ -68,7 +68,7 @@ const fetchDossierDetail = async () => {
   }
 }
 
-// Rafraîchir les documents quand on change de dossier dans l'arbre
+// Rafraîchir les documents quand on change de dossier
 watch(selectedFolderId, async (newId) => {
   if (isCreateMode.value) return
   
@@ -86,9 +86,14 @@ watch(selectedFolderId, async (newId) => {
   }
 })
 
+// Callback après upload réussi
 const handleUploaded = (newDoc) => {
-  // On ajoute le nouveau document en haut de la liste localement
+  // 1. Ajouter le document à la liste
   documents.value.unshift(newDoc)
+  // 2. Fermer la modale
+  showUploadDialog.value = false
+  // 3. Basculer vers l'onglet documents si on n'y est pas
+  tab.value = 'documents'
 }
 
 const isOverdue = computed(() => {
@@ -102,7 +107,6 @@ const getStatusColor = (status) => {
 }
 
 const downloadDocument = async (doc) => {
-  // Utilisation de l'endpoint download sécurisé que nous avons créé au Backend
   try {
     window.open(`${api.defaults.baseURL}/documents/documents/${doc.id}/download/`, '_blank')
   } catch (err) {
@@ -135,9 +139,26 @@ const downloadDocument = async (doc) => {
         </div>
       </div>
 
-      <v-btn color="indigo-darken-4" variant="outlined" prepend-icon="mdi-arrow-left" @click="router.push('/dossiers')">
-        Retour à la liste
-      </v-btn>
+      <div class="d-flex gap-2">
+        <v-btn 
+            color="indigo-darken-4" 
+            variant="outlined" 
+            prepend-icon="mdi-arrow-left" 
+            @click="router.push('/dossiers')"
+            class="mr-2"
+        >
+            Retour
+        </v-btn>
+        
+        <v-btn
+          color="indigo"
+          prepend-icon="mdi-file-plus"
+          @click="showUploadDialog = true"
+          :disabled="isCreateMode"
+        >
+          Ajouter un document
+        </v-btn>
+      </div>
     </div>
 
     <v-tabs v-model="tab" color="indigo-darken-4" align-tabs="start">
@@ -183,19 +204,15 @@ const downloadDocument = async (doc) => {
                   :title="folder.name"
                   :active="selectedFolderId.includes(folder.id)"
                 ></v-list-item>
+                
+                <v-list-item v-if="folders.length === 0" class="text-grey text-center font-italic">
+                    Dossier racine
+                </v-list-item>
               </v-list>
             </v-card>
           </v-col>
 
           <v-col cols="12" md="8">
-            <DocumentUpload
-              v-if="!isCreateMode"
-              :dossier-id="dossier.id"
-              :folder-id="selectedFolder?.id || null"
-              @uploaded="handleUploaded"
-              class="mb-6"
-            />
-
             <v-data-table
               :headers="[
                 { title: 'Document', key: 'title' },
@@ -205,17 +222,56 @@ const downloadDocument = async (doc) => {
               ]"
               :items="documents"
               class="border rounded"
+              hover
             >
               <template v-slot:item.uploaded_at="{ value }">
                 {{ new Date(value).toLocaleDateString('fr-GA') }}
               </template>
               <template v-slot:item.actions="{ item }">
-                <v-btn icon="mdi-download" variant="text" color="indigo" @click="downloadDocument(item)"></v-btn>
+                <v-btn icon="mdi-download" variant="text" size="small" color="indigo" @click="downloadDocument(item)"></v-btn>
+              </template>
+              <template v-slot:no-data>
+                <div class="text-center py-4">
+                    <v-icon size="40" color="grey-lighten-2">mdi-file-hidden</v-icon>
+                    <p class="text-grey mt-2">Aucun document dans ce répertoire</p>
+                </div>
               </template>
             </v-data-table>
           </v-col>
         </v-row>
       </v-window-item>
     </v-window>
+
+    <v-dialog v-model="showUploadDialog" max-width="600px">
+      <v-card>
+        <v-card-title class="d-flex justify-space-between align-center bg-indigo text-white">
+            <span>Uploader un document</span>
+            <v-btn icon="mdi-close" variant="text" @click="showUploadDialog = false"></v-btn>
+        </v-card-title>
+        <v-btn 
+          :to="{ name: 'EventCreate', query: { dossier_id: dossier.id } }"
+          prepend-icon="mdi-calendar-plus"
+        >
+          Ajouter au calendrier
+        </v-btn>
+        
+        <v-card-text class="pt-4">
+            <v-alert v-if="selectedFolder" type="info" variant="tonal" density="compact" class="mb-4">
+                Destination : <strong>{{ selectedFolder.name }}</strong>
+            </v-alert>
+            <v-alert v-else type="warning" variant="tonal" density="compact" class="mb-4">
+                Destination : <strong>Racine du dossier</strong>
+            </v-alert>
+
+            <DocumentUpload
+                v-if="!isCreateMode"
+                :dossier-id="dossier.id"
+                :folder-id="selectedFolder?.id || null"
+                @uploaded="handleUploaded"
+            />
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
   </div>
 </template>

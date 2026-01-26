@@ -55,32 +55,36 @@ class Client(models.Model):
     # === CHAMPS PERSONNE MORALE ===
     company_name = models.CharField(max_length=255, blank=True, verbose_name=_("Raison sociale"))
     
-    # RCCM gabonais : format comme LBV/2023/A/12345
+    # RCCM - Remplacer
     rccm_validator = RegexValidator(
-        regex=r'^[A-Z]{3}/\d{4}/[A-Z]/\d+$',
-        message=_("Format RCCM attendu : ex. LBV/2023/A/12345")
+        regex=r'^GA-[A-Z]{3}-\d{4}-[A-Z]\d{2}-\d{5}$',  # ✅ NOUVEAU
+        message=_("Format RCCM OHADA attendu : ex. GA-LBV-2024-A12-00567")
     )
+    
     rccm = models.CharField(
         max_length=50,
+        null=True,
         blank=True,
         validators=[rccm_validator],
         verbose_name=_("N° RCCM"),
         unique=True
     )
 
-    # NIF gabonais : 10 chiffres (ex. 2023000123)
+    # NIF - Remplacer
     nif_validator = RegexValidator(
-        regex=r'^\d{10}$',
-        message=_("Le NIF gabonais doit comporter exactement 10 chiffres.")
+        regex=r'^\d{6}-[A-Z]$',  # ✅ NOUVEAU
+        message=_("Le NIF gabonais doit suivre le format XXXXXX-L (ex: 370669-C)")
     )
+    # NIF max_length - Augmenter
     nif = models.CharField(
-        max_length=10,
+        max_length=20,  # ✅ CHANGÉ de 10 à 20
         blank=True,
+        null=True,
         validators=[nif_validator],
         unique=True,
         verbose_name=_("NIF / Identifiant Fiscal Unique")
     )
-
+   
     representative_name = models.CharField(max_length=255, blank=True, verbose_name=_("Nom du représentant légal"))
     representative_role = models.CharField(max_length=100, blank=True, verbose_name=_("Fonction du représentant"))
 
@@ -100,7 +104,13 @@ class Client(models.Model):
         verbose_name=_("Téléphone principal"),
         help_text=_("Ex. : +241 01 23 45 67")
     )
-    phone_secondary = models.CharField(max_length=20, blank=True, validators=[phone_regex], verbose_name=_("Téléphone secondaire"))
+    phone_secondary = models.CharField(
+    max_length=20, 
+    blank=True, 
+    null=True,  # ✅ AJOUT DE CETTE LIGNE
+    validators=[phone_regex], 
+    verbose_name=_("Téléphone secondaire")
+)
 
     # === ADRESSE (adaptée Gabon) ===
     address_line = models.CharField(max_length=255, blank=True, verbose_name=_("Rue / BP"))

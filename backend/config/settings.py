@@ -6,13 +6,34 @@ import os
 from pathlib import Path
 from datetime import timedelta
 
+# ═══════════════════════════════════════════════════════════════════════════
+# 🔧 CHARGEMENT DES VARIABLES D'ENVIRONNEMENT
+# ═══════════════════════════════════════════════════════════════════════════
+from dotenv import load_dotenv
+
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Charger le fichier .env depuis la racine du backend
+env_path = BASE_DIR / '.env'
+load_dotenv(dotenv_path=env_path)
+
+# Affichage pour diagnostic (à retirer en production)
+if os.getenv('DEBUG', 'True').lower() == 'true':
+    if env_path.exists():
+        print(f"✅ Fichier .env chargé depuis : {env_path}")
+    else:
+        print(f"⚠️  Fichier .env non trouvé : {env_path}")
+        print("   Les valeurs par défaut seront utilisées")
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CONFIGURATION DE BASE
+# ═══════════════════════════════════════════════════════════════════════════
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get(
-    'DJANGO_SECRET_KEY',
-    'django-insecure-dev-key-CHANGE-IN-PRODUCTION'
+    'SECRET_KEY',
+    os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-key-CHANGE-IN-PRODUCTION')
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -77,8 +98,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Database
-# SQLite pour développement, PostgreSQL pour production
+# ═══════════════════════════════════════════════════════════════════════════
+# DATABASE CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
 USE_SQLITE = os.environ.get('USE_SQLITE', 'True').lower() == 'true'
 
 if USE_SQLITE:
@@ -107,9 +129,9 @@ else:
     }
     print("🚀 Mode Production : PostgreSQL activé")
 
-# Cache Configuration
-# SQLite : cache simple en mémoire
-# Production : Redis
+# ═══════════════════════════════════════════════════════════════════════════
+# CACHE CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
 USE_REDIS = os.environ.get('USE_REDIS', 'False').lower() == 'true'
 
 if USE_REDIS and not USE_SQLITE:
@@ -138,14 +160,16 @@ else:
     }
     print("💾 Cache local en mémoire activé")
 
-# Password validation
+# ═══════════════════════════════════════════════════════════════════════════
+# PASSWORD VALIDATION
+# ═══════════════════════════════════════════════════════════════════════════
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-        'OPTIONS': {'min_length': 8 if DEBUG else 12}  # Plus strict en production
+        'OPTIONS': {'min_length': 8 if DEBUG else 12}
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -155,31 +179,34 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Internationalization
+# ═══════════════════════════════════════════════════════════════════════════
+# INTERNATIONALIZATION
+# ═══════════════════════════════════════════════════════════════════════════
 LANGUAGE_CODE = 'fr-fr'
 TIME_ZONE = 'Africa/Libreville'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+# ═══════════════════════════════════════════════════════════════════════════
+# STATIC & MEDIA FILES
+# ═══════════════════════════════════════════════════════════════════════════
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static'] if (BASE_DIR / 'static').exists() else []
 
-# Media files (Uploads chiffrés)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-
-# Créer les répertoires si nécessaires
 MEDIA_ROOT.mkdir(exist_ok=True)
 
-# Default primary key field type
+# ═══════════════════════════════════════════════════════════════════════════
+# AUTHENTICATION
+# ═══════════════════════════════════════════════════════════════════════════
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# Custom User Model
 AUTH_USER_MODEL = 'users.User'
 
-# Django REST Framework
+# ═══════════════════════════════════════════════════════════════════════════
+# DJANGO REST FRAMEWORK
+# ═══════════════════════════════════════════════════════════════════════════
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -217,7 +244,9 @@ REST_FRAMEWORK = {
     'DATE_FORMAT': '%Y-%m-%d',
 }
 
-# JWT Configuration
+# ═══════════════════════════════════════════════════════════════════════════
+# JWT CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=24 if DEBUG else 1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30 if DEBUG else 7),
@@ -234,7 +263,9 @@ SIMPLE_JWT = {
     'TOKEN_TYPE_CLAIM': 'token_type',
 }
 
-# CORS Configuration
+# ═══════════════════════════════════════════════════════════════════════════
+# CORS CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
 CORS_ALLOWED_ORIGINS = os.environ.get(
     'CORS_ALLOWED_ORIGINS',
     'http://localhost:3000,http://localhost:5173,http://localhost:8080,http://127.0.0.1:5173'
@@ -251,7 +282,9 @@ CORS_ALLOW_METHODS = [
     'PUT',
 ]
 
-# Django Guardian (Permissions granulaires)
+# ═══════════════════════════════════════════════════════════════════════════
+# DJANGO GUARDIAN (Permissions granulaires)
+# ═══════════════════════════════════════════════════════════════════════════
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'guardian.backends.ObjectPermissionBackend',
@@ -259,26 +292,43 @@ AUTHENTICATION_BACKENDS = [
 
 ANONYMOUS_USER_NAME = None
 
-# File Encryption Key (CRITICAL: DOIT ÊTRE EN VARIABLE D'ENVIRONNEMENT EN PRODUCTION)
-FILE_ENCRYPTION_KEY = os.environ.get(
-    'FILE_ENCRYPTION_KEY',
-    'dev-key-DO-NOT-USE-IN-PRODUCTION-' + 'A' * 32  # Clé de dev par défaut
-)
+# ═══════════════════════════════════════════════════════════════════════════
+# 🔐 ENCRYPTION KEYS (CRITIQUE: VARIABLES D'ENVIRONNEMENT OBLIGATOIRES)
+# ═══════════════════════════════════════════════════════════════════════════
 
-if not DEBUG and FILE_ENCRYPTION_KEY.startswith('dev-key'):
-    raise ValueError(
-        "FILE_ENCRYPTION_KEY de développement détectée en production! "
-        "Générez une vraie clé avec: "
-        "python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'"
-    )
+FILE_ENCRYPTION_KEY = os.environ.get('FILE_ENCRYPTION_KEY')
 
-# Backup Encryption Key
-BACKUP_ENCRYPTION_KEY = os.environ.get(
-    'BACKUP_ENCRYPTION_KEY',
-    FILE_ENCRYPTION_KEY  # Utilise la même en dev
-)
+if not FILE_ENCRYPTION_KEY:
+    if DEBUG:
+        # En développement, générer un avertissement mais autoriser le démarrage
+        print("\n" + "=" * 70)
+        print("⚠️  AVERTISSEMENT: FILE_ENCRYPTION_KEY non définie!")
+        print("=" * 70)
+        print("Générez une clé valide avec:")
+        print('  python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"')
+        print("\nPuis ajoutez-la dans backend/.env:")
+        print("  FILE_ENCRYPTION_KEY=votre_clé_générée")
+        print("=" * 70 + "\n")
+        
+        # Utiliser une clé temporaire UNIQUEMENT en développement
+        from cryptography.fernet import Fernet
+        FILE_ENCRYPTION_KEY = Fernet.generate_key().decode()
+        print(f"🔑 Clé temporaire générée pour cette session:")
+        print(f"   {FILE_ENCRYPTION_KEY}\n")
+    else:
+        # En production, bloquer le démarrage
+        raise ValueError(
+            "FILE_ENCRYPTION_KEY manquante en production! "
+            "Définissez-la dans les variables d'environnement."
+        )
 
-# Security Settings (plus souples en développement)
+# Clés de backup (utilisent la même clé par défaut)
+BACKUP_ENCRYPTION_KEY = os.environ.get('BACKUP_ENCRYPTION_KEY', FILE_ENCRYPTION_KEY)
+ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY', FILE_ENCRYPTION_KEY)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# SECURITY SETTINGS
+# ═══════════════════════════════════════════════════════════════════════════
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
@@ -296,13 +346,17 @@ else:
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
 
-# Session Configuration
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # DB pour SQLite
+# ═══════════════════════════════════════════════════════════════════════════
+# SESSION CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 86400  # 24 heures
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax' if DEBUG else 'Strict'
 
-# Logging Configuration
+# ═══════════════════════════════════════════════════════════════════════════
+# LOGGING CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
 LOG_DIR = BASE_DIR / 'logs'
 LOG_DIR.mkdir(exist_ok=True)
 
@@ -344,7 +398,9 @@ LOGGING = {
     },
 }
 
-# Email Configuration (pour notifications)
+# ═══════════════════════════════════════════════════════════════════════════
+# EMAIL CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
@@ -353,7 +409,9 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@cabinet.ga')
 
-# Configuration spécifique développement
+# ═══════════════════════════════════════════════════════════════════════════
+# BANNER DE DÉVELOPPEMENT
+# ═══════════════════════════════════════════════════════════════════════════
 if DEBUG:
     print("""
     ╔════════════════════════════════════════════════════════════╗
@@ -369,26 +427,3 @@ if DEBUG:
     ║  ⚠️  NE PAS UTILISER EN PRODUCTION                         ║
     ╚════════════════════════════════════════════════════════════╝
     """)
-else:
-    print("""
-    ╔════════════════════════════════════════════════════════════╗
-    ║          🚀 MODE PRODUCTION ACTIVÉ                         ║
-    ╠════════════════════════════════════════════════════════════╣
-    ║  ✓ PostgreSQL configuré                                    ║
-    ║  ✓ Redis activé (si USE_REDIS=true)                        ║
-    ║  ✓ Sécurité HTTPS stricte                                  ║
-    ║  ✓ Rate limiting strict                                    ║
-    ║  ✓ Clés de chiffrement vérifiées                           ║
-    ╚════════════════════════════════════════════════════════════╝
-    """)
-
-# Extensions de fichiers autorisées
-ALLOWED_FILE_EXTENSIONS = [
-    '.pdf', '.docx', '.doc', '.xlsx', '.xls', '.pptx', '.ppt',
-    '.txt', '.rtf', '.odt', '.ods', '.odp',
-    '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff',
-    '.zip', '.rar', '.7z', '.msg', '.eml'
-]
-
-# Taille maximale d'upload (en MB)
-MAX_UPLOAD_SIZE_MB = int(os.environ.get('MAX_UPLOAD_SIZE_MB', '100'))

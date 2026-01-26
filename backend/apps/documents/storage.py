@@ -36,7 +36,26 @@ class EncryptedFileStorage(FileSystemStorage):
                 "Générez-la avec: python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'"
             )
         
-        return Fernet(encryption_key.encode() if isinstance(encryption_key, str) else encryption_key)
+        # Validation et conversion de la clé
+        try:
+            # Si c'est une string, encoder en bytes
+            if isinstance(encryption_key, str):
+                key_bytes = encryption_key.encode('utf-8')
+            else:
+                key_bytes = encryption_key
+            
+            # Tentative de création du cipher pour valider la clé
+            return Fernet(key_bytes)
+            
+        except Exception as e:
+            raise ValueError(
+                f"FILE_ENCRYPTION_KEY invalide: {str(e)}\n"
+                "La clé doit être 32 bytes encodés en base64 URL-safe.\n"
+                "Générez une clé valide avec:\n"
+                "  python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\"\n"
+                "Puis ajoutez-la dans votre fichier .env:\n"
+                "  FILE_ENCRYPTION_KEY=votre_clé_générée"
+            )
     
     def _generate_secure_filename(self, original_name: str) -> str:
         """
@@ -151,45 +170,35 @@ class AuditedFileStorage(EncryptedFileStorage):
         
         Args:
             action: Type d'action (READ, WRITE, DELETE)
-            file_path: Chemin du fichier concerné
-            user: Utilisateur effectuant l'action (si disponible)
+            file_path: Chemin du fichier accédé
+            user: Utilisateur effectuant l'action
         """
         from apps.audit.models import AuditLog
         from django.contrib.contenttypes.models import ContentType
-        from apps.documents.models import Document
         
         try:
-            # Recherche du document correspondant
-            doc = Document.objects.filter(file=file_path).first()
-            
-            if doc:
-                AuditLog.objects.create(
-                    user=user,
-                    content_type=ContentType.objects.get_for_model(Document),
-                    object_id=doc.id,
-                    object_repr=f"Document: {doc.title}",
-                    action_type=action,
-                    description=f"Accès fichier: {action} - {file_path}",
-                    changes={"file_path": file_path, "action": action}
-                )
-        except Exception as e:
-            # Ne jamais bloquer l'opération à cause d'un échec d'audit
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Échec log audit pour {file_path}: {str(e)}")
-    
-    def _open(self, name: str, mode: str = 'rb') -> File:
-        """Ouvre le fichier et enregistre l'accès"""
-        self._log_access("READ", name)
-        return super()._open(name, mode)
+            AuditLog.objects.create(
+                user=user,
+                action_type='FILE_ACCESS',
+                description=f"{action} - {file_path}",
+                changes={'action': action, 'path': file_path}
+            )
+        except Exception:
+            # Ne pas bloquer les opérations si l'audit échoue
+            pass
     
     def _save(self, name: str, content: File) -> str:
-        """Sauvegarde le fichier et enregistre l'action"""
-        saved_path = super()._save(name, content)
-        self._log_access("WRITE", saved_path)
-        return saved_path
+        """Sauvegarde avec log d'audit"""
+        result = super()._save(name, content)
+        self._log_access('WRITE', result)
+        return result
     
-    def delete(self, name: str) -> None:
-        """Supprime le fichier et enregistre l'action"""
-        self._log_access("DELETE", name)
+    def _open(self, name: str, mode: str = 'rb') -> File:
+        """Ouverture avec log d'audit"""
+        self._log_access('READ', name)
+        return super()._open(name, mode)
+    
+    def delete(self, name: str):
+        """Suppression avec log d'audit"""
+        self._log_access('DELETE', name)
         return super().delete(name)

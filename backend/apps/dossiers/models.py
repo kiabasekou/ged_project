@@ -8,6 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from apps.clients.models import Client  # À adapter selon ta structure d'apps
 
 
+
 class Dossier(models.Model):
     """
     Modèle central représentant un dossier juridique ou notarial.
@@ -222,3 +223,39 @@ class Dossier(models.Model):
 
         self.full_clean()
         super().save(*args, **kwargs)
+
+
+    class Meta:
+        verbose_name = _("Dossier")
+        verbose_name_plural = _("Dossiers")
+        ordering = ['-opening_date', '-created_at']
+        
+        # PERMISSIONS PERSONNALISÉES
+        permissions = [
+            # Permissions de base (déjà existantes)
+            ("can_view_confidential_dossier", _("Peut consulter les dossiers confidentiels")),
+            ("can_archive_dossier", _("Peut archiver un dossier")),
+            
+            # NOUVELLES PERMISSIONS pour gestion des collaborateurs
+            ("assign_users_dossier", _("Peut assigner des collaborateurs au dossier")),
+            ("view_all_dossiers", _("Peut voir tous les dossiers du cabinet")),
+            ("manage_dossier_permissions", _("Peut gérer les permissions d'un dossier")),
+        ]
+        
+        indexes = [
+            models.Index(fields=['reference_code']),
+            models.Index(fields=['client']),
+            models.Index(fields=['responsible']),
+            models.Index(fields=['status']),
+            models.Index(fields=['category']),
+            models.Index(fields=['critical_deadline']),
+            models.Index(fields=['opening_date']),
+        ]
+        
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(closing_date__gte=models.F('opening_date')) | 
+                      models.Q(closing_date__isnull=True),
+                name='closing_date_after_opening'
+            )
+        ]
