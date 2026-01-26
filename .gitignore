@@ -5,6 +5,7 @@ backend/*.pyc
 backend/db.sqlite3
 backend/media/
 backend/.env
+backend/logs/
 
 # --- Frontend (Node/Vue) ---
 frontend/node_modules/
