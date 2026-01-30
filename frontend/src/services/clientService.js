@@ -6,6 +6,7 @@
 
 import api from '@/plugins/axios'
 
+
 /**
  * Service centralisant toutes les opérations liées aux clients
  * Sépare la logique métier de la gestion d'état (stores)
