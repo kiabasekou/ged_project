@@ -1,15 +1,46 @@
-/**
- * Validateurs stricts pour upload de documents - Frontend Vue.js
- * Réplique la logique de validation du backend côté client
- */
+// ============================================================================
+// Utilitaires : Validation de fichiers (Fonctions pures)
+// Description : Validateurs côté client pour upload de documents juridiques
+// Auteur : Maître Ahmed - GED Cabinet Kiaba
+// ============================================================================
 
+// ============================================================================
+// CONSTANTES DE CONFIGURATION
+// ============================================================================
+
+/**
+ * Extensions de fichiers autorisées
+ * Conformes aux standards du cabinet juridique gabonais
+ */
 export const ALLOWED_EXTENSIONS = [
-  '.pdf', '.docx', '.doc', '.xlsx', '.xls', '.pptx', '.ppt',
-  '.txt', '.rtf', '.odt', '.ods', '.odp',
-  '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff',
-  '.zip', '.rar', '.7z', '.msg', '.eml'
+  '.pdf',   // Documents Adobe
+  '.docx',  // Microsoft Word (moderne)
+  '.doc',   // Microsoft Word (legacy)
+  '.xlsx',  // Microsoft Excel (moderne)
+  '.xls',   // Microsoft Excel (legacy)
+  '.pptx',  // Microsoft PowerPoint
+  '.ppt',   // PowerPoint (legacy)
+  '.txt',   // Texte brut
+  '.rtf',   // Rich Text Format
+  '.odt',   // OpenDocument Text
+  '.ods',   // OpenDocument Spreadsheet
+  '.odp',   // OpenDocument Presentation
+  '.jpg',   // Image JPEG
+  '.jpeg',  // Image JPEG
+  '.png',   // Image PNG
+  '.gif',   // Image GIF
+  '.bmp',   // Image Bitmap
+  '.tiff',  // Image TIFF
+  '.zip',   // Archive ZIP
+  '.rar',   // Archive RAR
+  '.7z',    // Archive 7-Zip
+  '.msg',   // Email Outlook
+  '.eml'    // Email standard
 ]
 
+/**
+ * Types MIME autorisés avec leurs extensions correspondantes
+ */
 export const ALLOWED_MIME_TYPES = {
   '.pdf': 'application/pdf',
   '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -17,62 +48,87 @@ export const ALLOWED_MIME_TYPES = {
   '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   '.xls': 'application/vnd.ms-excel',
   '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  '.ppt': 'application/vnd.ms-powerpoint',
   '.txt': 'text/plain',
+  '.rtf': 'application/rtf',
+  '.odt': 'application/vnd.oasis.opendocument.text',
+  '.ods': 'application/vnd.oasis.opendocument.spreadsheet',
+  '.odp': 'application/vnd.oasis.opendocument.presentation',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
   '.png': 'image/png',
   '.gif': 'image/gif',
-  '.zip': 'application/zip'
+  '.bmp': 'image/bmp',
+  '.tiff': 'image/tiff',
+  '.zip': 'application/zip',
+  '.rar': 'application/x-rar-compressed',
+  '.7z': 'application/x-7z-compressed',
+  '.msg': 'application/vnd.ms-outlook',
+  '.eml': 'message/rfc822'
 }
 
+/**
+ * Taille maximale de fichier (100 MB)
+ * Conforme aux limitations serveur Django
+ */
 export const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100 MB
 
 /**
- * Valide un fichier avant upload
+ * Taille recommandée maximale pour upload rapide (10 MB)
+ */
+export const RECOMMENDED_MAX_SIZE = 10 * 1024 * 1024 // 10 MB
+
+// ============================================================================
+// FONCTIONS DE VALIDATION PURES
+// ============================================================================
+
+/**
+ * Extrait l'extension d'un nom de fichier
+ * 
+ * @param {string} filename - Nom du fichier
+ * @returns {string} Extension en minuscules avec le point (ex: '.pdf')
+ * 
+ * @example
+ * getFileExtension('contrat.PDF') // '.pdf'
+ * getFileExtension('mémoire.defense.docx') // '.docx'
+ */
+export function getFileExtension(filename) {
+  if (!filename || typeof filename !== 'string') {
+    return ''
+  }
+  
+  const lastDotIndex = filename.lastIndexOf('.')
+  
+  if (lastDotIndex === -1 || lastDotIndex === 0) {
+    return '' // Pas d'extension ou fichier caché Unix
+  }
+  
+  return filename.substring(lastDotIndex).toLowerCase()
+}
+
+/**
+ * Valide la taille d'un fichier
+ * 
  * @param {File} file - Fichier à valider
+ * @param {number} maxSize - Taille maximale en octets
  * @returns {Object} { valid: boolean, error: string|null }
  */
-export function validateFile(file) {
-  // 1. Vérifier que c'est bien un objet File
-  if (!(file instanceof File)) {
+export function validateFileSize(file, maxSize = MAX_FILE_SIZE) {
+  if (!file || !(file instanceof File)) {
     return { valid: false, error: "Objet fichier invalide" }
   }
 
-  // 2. Vérifier la taille
-  if (file.size > MAX_FILE_SIZE) {
-    const maxSizeMB = Math.round(MAX_FILE_SIZE / (1024 * 1024))
-    return { 
-      valid: false, 
-      error: `Fichier trop volumineux. Maximum autorisé: ${maxSizeMB} MB` 
-    }
-  }
-
   if (file.size === 0) {
-    return { valid: false, error: "Le fichier est vide" }
+    return { valid: false, error: "Le fichier est vide (0 octet)" }
   }
 
-  // 3. Extraire et vérifier l'extension
-  const extension = getFileExtension(file.name)
-  
-  if (!ALLOWED_EXTENSIONS.includes(extension)) {
+  if (file.size > maxSize) {
+    const maxSizeMB = Math.round(maxSize / (1024 * 1024))
+    const actualSizeMB = (file.size / (1024 * 1024)).toFixed(2)
+    
     return { 
       valid: false, 
-      error: `Extension '${extension}' non autorisée. Extensions acceptées: ${ALLOWED_EXTENSIONS.join(', ')}` 
-    }
-  }
-
-  // 4. Vérifier le type MIME
-  const expectedMimeType = ALLOWED_MIME_TYPES[extension]
-  
-  if (expectedMimeType && file.type !== expectedMimeType) {
-    // Tolérance pour certains navigateurs qui détectent mal les MIME types
-    const tolerantExtensions = ['.docx', '.xlsx', '.pptx']
-    
-    if (!tolerantExtensions.includes(extension)) {
-      return { 
-        valid: false, 
-        error: `Type MIME incohérent. Extension ${extension} attendue: ${expectedMimeType}, reçu: ${file.type}` 
-      }
+      error: `Fichier trop volumineux (${actualSizeMB} MB). Maximum autorisé: ${maxSizeMB} MB` 
     }
   }
 
@@ -80,261 +136,294 @@ export function validateFile(file) {
 }
 
 /**
+ * Valide l'extension d'un fichier
+ * 
+ * @param {File} file - Fichier à valider
+ * @param {Array<string>} allowedExtensions - Extensions autorisées
+ * @returns {Object} { valid: boolean, error: string|null, extension: string }
+ */
+export function validateExtension(file, allowedExtensions = ALLOWED_EXTENSIONS) {
+  if (!file || !(file instanceof File)) {
+    return { valid: false, error: "Objet fichier invalide", extension: '' }
+  }
+
+  const extension = getFileExtension(file.name)
+  
+  if (!extension) {
+    return { 
+      valid: false, 
+      error: "Le fichier n'a pas d'extension", 
+      extension: '' 
+    }
+  }
+
+  if (!allowedExtensions.includes(extension)) {
+    return { 
+      valid: false, 
+      error: `Extension '${extension}' non autorisée. Extensions acceptées: ${allowedExtensions.join(', ')}`,
+      extension 
+    }
+  }
+
+  return { valid: true, error: null, extension }
+}
+
+/**
+ * Valide le type MIME d'un fichier
+ * 
+ * @param {File} file - Fichier à valider
+ * @returns {Object} { valid: boolean, error: string|null, warning: string|null }
+ */
+export function validateMimeType(file) {
+  if (!file || !(file instanceof File)) {
+    return { valid: false, error: "Objet fichier invalide", warning: null }
+  }
+
+  const extension = getFileExtension(file.name)
+  const expectedMimeType = ALLOWED_MIME_TYPES[extension]
+  
+  // Si pas de MIME type attendu, on accepte (extension déjà validée avant)
+  if (!expectedMimeType) {
+    return { valid: true, error: null, warning: null }
+  }
+
+  // Certains navigateurs détectent mal les MIME types des fichiers Office
+  const tolerantExtensions = ['.docx', '.xlsx', '.pptx', '.doc', '.xls', '.ppt']
+  
+  if (file.type !== expectedMimeType) {
+    if (tolerantExtensions.includes(extension)) {
+      // Tolérance pour Office : on accepte mais on avertit
+      return { 
+        valid: true, 
+        error: null,
+        warning: `Type MIME incohérent mais accepté (extension Office): attendu ${expectedMimeType}, reçu ${file.type}` 
+      }
+    } else {
+      return { 
+        valid: false, 
+        error: `Type MIME incohérent. Extension ${extension} attendue: ${expectedMimeType}, reçu: ${file.type || 'vide'}`,
+        warning: null
+      }
+    }
+  }
+
+  return { valid: true, error: null, warning: null }
+}
+
+/**
+ * Valide le nom du fichier (caractères spéciaux interdits)
+ * 
+ * @param {File} file - Fichier à valider
+ * @returns {Object} { valid: boolean, error: string|null }
+ */
+export function validateFileName(file) {
+  if (!file || !(file instanceof File)) {
+    return { valid: false, error: "Objet fichier invalide" }
+  }
+
+  // Caractères interdits dans les noms de fichiers (Windows + Linux + sécurité)
+  const invalidChars = /[<>:"/\\|?*\x00-\x1F]/g
+  const fileName = file.name
+  
+  if (invalidChars.test(fileName)) {
+    const foundChars = fileName.match(invalidChars)
+    return { 
+      valid: false, 
+      error: `Le nom du fichier contient des caractères invalides: ${foundChars.join(', ')}` 
+    }
+  }
+
+  // Vérifier la longueur du nom
+  if (fileName.length > 255) {
+    return { 
+      valid: false, 
+      error: "Le nom du fichier est trop long (maximum 255 caractères)" 
+    }
+  }
+
+  // Vérifier les noms réservés Windows
+  const reservedNames = ['CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM2', 'COM3', 'COM4', 'LPT1', 'LPT2']
+  const baseNameUpper = fileName.split('.')[0].toUpperCase()
+  
+  if (reservedNames.includes(baseNameUpper)) {
+    return { 
+      valid: false, 
+      error: `Le nom "${baseNameUpper}" est réservé par le système` 
+    }
+  }
+
+  return { valid: true, error: null }
+}
+
+/**
+ * Validation complète d'un fichier (fonction principale)
+ * 
+ * @param {File} file - Fichier à valider
+ * @returns {Object} { valid: boolean, error: string|null, warnings: Array<string> }
+ * 
+ * @example
+ * const result = validateFile(file)
+ * if (!result.valid) {
+ *   console.error(result.error)
+ * }
+ * if (result.warnings.length > 0) {
+ *   console.warn(result.warnings)
+ * }
+ */
+export function validateFile(file) {
+  const warnings = []
+  
+  // 1. Vérifier que c'est bien un objet File
+  if (!file || !(file instanceof File)) {
+    return { valid: false, error: "Objet fichier invalide", warnings }
+  }
+
+  // 2. Valider la taille
+  const sizeResult = validateFileSize(file)
+  if (!sizeResult.valid) {
+    return { valid: false, error: sizeResult.error, warnings }
+  }
+  
+  // Avertissement si fichier volumineux
+  if (file.size > RECOMMENDED_MAX_SIZE) {
+    warnings.push('Fichier volumineux : le téléversement peut prendre du temps')
+  }
+
+  // 3. Valider l'extension
+  const extensionResult = validateExtension(file)
+  if (!extensionResult.valid) {
+    return { valid: false, error: extensionResult.error, warnings }
+  }
+
+  // 4. Valider le type MIME
+  const mimeResult = validateMimeType(file)
+  if (!mimeResult.valid) {
+    return { valid: false, error: mimeResult.error, warnings }
+  }
+  if (mimeResult.warning) {
+    warnings.push(mimeResult.warning)
+  }
+
+  // 5. Valider le nom du fichier
+  const nameResult = validateFileName(file)
+  if (!nameResult.valid) {
+    return { valid: false, error: nameResult.error, warnings }
+  }
+
+  return { valid: true, error: null, warnings }
+}
+
+/**
  * Valide plusieurs fichiers
+ * 
  * @param {FileList|Array<File>} files - Liste de fichiers
- * @returns {Object} { valid: boolean, errors: Array<string> }
+ * @returns {Object} { valid: boolean, errors: Array<string>, warnings: Array<string> }
  */
 export function validateFiles(files) {
   const errors = []
+  const warnings = []
   
   Array.from(files).forEach((file, index) => {
     const result = validateFile(file)
+    
     if (!result.valid) {
       errors.push(`Fichier ${index + 1} (${file.name}): ${result.error}`)
+    }
+    
+    if (result.warnings && result.warnings.length > 0) {
+      result.warnings.forEach(warning => {
+        warnings.push(`Fichier ${index + 1} (${file.name}): ${warning}`)
+      })
     }
   })
 
   return {
     valid: errors.length === 0,
-    errors
+    errors,
+    warnings
   }
 }
 
 /**
- * Extrait l'extension d'un nom de fichier
- * @param {string} filename - Nom du fichier
- * @returns {string} Extension en minuscules (ex: '.pdf')
- */
-export function getFileExtension(filename) {
-  const lastDotIndex = filename.lastIndexOf('.')
-  if (lastDotIndex === -1) return ''
-  return filename.substring(lastDotIndex).toLowerCase()
-}
-
-/**
- * Formate la taille d'un fichier en format lisible
+ * Formate une taille de fichier en unités lisibles
+ * 
  * @param {number} bytes - Taille en octets
- * @returns {string} Taille formatée (ex: "2.5 MB")
+ * @param {number} decimals - Nombre de décimales
+ * @returns {string} Taille formatée (ex: "1.5 MB")
  */
-export function formatFileSize(bytes) {
-  if (bytes === 0) return '0 o'
+export function formatFileSize(bytes, decimals = 2) {
+  if (bytes === 0) return '0 octet'
   
-  const units = ['o', 'Ko', 'Mo', 'Go', 'To']
-  let size = bytes
-  let unitIndex = 0
+  const k = 1024
+  const dm = decimals < 0 ? 0 : decimals
+  const sizes = ['octets', 'Ko', 'Mo', 'Go', 'To']
   
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024
-    unitIndex++
-  }
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
   
-  return `${size.toFixed(1)} ${units[unitIndex]}`
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
 }
 
 /**
- * Génère un aperçu visuel d'un fichier image
- * @param {File} file - Fichier image
- * @returns {Promise<string>} Data URL de l'image
- */
-export function generateImagePreview(file) {
-  return new Promise((resolve, reject) => {
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp']
-    const extension = getFileExtension(file.name)
-    
-    if (!imageExtensions.includes(extension)) {
-      reject(new Error("Le fichier n'est pas une image"))
-      return
-    }
-    
-    const reader = new FileReader()
-    
-    reader.onload = (e) => {
-      resolve(e.target.result)
-    }
-    
-    reader.onerror = () => {
-      reject(new Error("Erreur de lecture du fichier"))
-    }
-    
-    reader.readAsDataURL(file)
-  })
-}
-
-/**
- * Vérifie les magic bytes d'un fichier (détection basique)
+ * Vérifie si un fichier dépasse la taille recommandée
+ * 
  * @param {File} file - Fichier à vérifier
- * @returns {Promise<boolean>} True si les magic bytes correspondent
+ * @returns {boolean}
  */
-export async function verifyMagicBytes(file) {
-  const extension = getFileExtension(file.name)
-  
-  // Signatures de fichiers (magic bytes)
-  const signatures = {
-    '.pdf': [0x25, 0x50, 0x44, 0x46], // %PDF
-    '.zip': [0x50, 0x4B, 0x03, 0x04], // PK (utilisé par docx, xlsx, pptx)
-    '.jpg': [0xFF, 0xD8, 0xFF],
-    '.png': [0x89, 0x50, 0x4E, 0x47],
-    '.gif': [0x47, 0x49, 0x46, 0x38]
-  }
-  
-  // Extensions basées sur ZIP
-  const zipBasedExtensions = ['.docx', '.xlsx', '.pptx', '.odt', '.ods']
-  
-  let expectedSignature
-  
-  if (zipBasedExtensions.includes(extension)) {
-    expectedSignature = signatures['.zip']
-  } else {
-    expectedSignature = signatures[extension]
-  }
-  
-  // Si pas de signature définie, on accepte
-  if (!expectedSignature) {
-    return true
-  }
-  
-  try {
-    const arrayBuffer = await file.slice(0, expectedSignature.length).arrayBuffer()
-    const bytes = new Uint8Array(arrayBuffer)
-    
-    return expectedSignature.every((byte, index) => bytes[index] === byte)
-  } catch (error) {
-    console.error('Erreur vérification magic bytes:', error)
-    return false
-  }
+export function isLargeFile(file) {
+  return file.size > RECOMMENDED_MAX_SIZE
 }
 
 /**
- * Classe de validation complète avec vérifications asynchrones
+ * Obtient une description lisible d'une extension
+ * 
+ * @param {string} extension - Extension (avec ou sans point)
+ * @returns {string} Description
  */
-export class FileValidator {
-  constructor(file) {
-    this.file = file
-    this.errors = []
-  }
-
-  /**
-   * Lance toutes les validations
-   * @returns {Promise<Object>} { valid: boolean, errors: Array<string> }
-   */
-  async validate() {
-    this.errors = []
-
-    // Validation basique synchrone
-    const basicValidation = validateFile(this.file)
-    if (!basicValidation.valid) {
-      this.errors.push(basicValidation.error)
-      return { valid: false, errors: this.errors }
-    }
-
-    // Validation des magic bytes (asynchrone)
-    const magicBytesValid = await verifyMagicBytes(this.file)
-    if (!magicBytesValid) {
-      this.errors.push(
-        `Le fichier ne semble pas être un ${getFileExtension(this.file.name)} valide`
-      )
-    }
-
-    return {
-      valid: this.errors.length === 0,
-      errors: this.errors
-    }
-  }
-
-  /**
-   * Récupère les informations du fichier
-   * @returns {Object} Métadonnées du fichier
-   */
-  getFileInfo() {
-    return {
-      name: this.file.name,
-      size: this.file.size,
-      sizeFormatted: formatFileSize(this.file.size),
-      type: this.file.type,
-      extension: getFileExtension(this.file.name),
-      lastModified: new Date(this.file.lastModified)
-    }
-  }
-}
-
-/**
- * Hook Vue 3 Composition API pour validation de fichiers
- * @returns {Object} Méthodes et état de validation
- */
-export function useFileValidation() {
-  const { ref, reactive } = require('vue')
+export function getExtensionDescription(extension) {
+  const ext = extension.toLowerCase().replace('.', '')
   
-  const validationState = reactive({
-    isValidating: false,
-    errors: [],
-    validFiles: []
-  })
-
-  const validateSingleFile = async (file) => {
-    validationState.isValidating = true
-    validationState.errors = []
-    
-    try {
-      const validator = new FileValidator(file)
-      const result = await validator.validate()
-      
-      if (!result.valid) {
-        validationState.errors = result.errors
-        return false
-      }
-      
-      validationState.validFiles = [file]
-      return true
-    } finally {
-      validationState.isValidating = false
-    }
+  const descriptions = {
+    pdf: 'Document PDF',
+    doc: 'Document Word (ancien format)',
+    docx: 'Document Word',
+    xls: 'Tableur Excel (ancien format)',
+    xlsx: 'Tableur Excel',
+    ppt: 'Présentation PowerPoint (ancien format)',
+    pptx: 'Présentation PowerPoint',
+    txt: 'Fichier texte',
+    rtf: 'Document RTF',
+    odt: 'Document OpenDocument',
+    ods: 'Tableur OpenDocument',
+    jpg: 'Image JPEG',
+    jpeg: 'Image JPEG',
+    png: 'Image PNG',
+    gif: 'Image GIF',
+    zip: 'Archive ZIP',
+    rar: 'Archive RAR'
   }
-
-  const validateMultipleFiles = async (files) => {
-    validationState.isValidating = true
-    validationState.errors = []
-    validationState.validFiles = []
-    
-    try {
-      const results = await Promise.all(
-        Array.from(files).map(async (file) => {
-          const validator = new FileValidator(file)
-          const result = await validator.validate()
-          return { file, ...result }
-        })
-      )
-      
-      const invalidResults = results.filter(r => !r.valid)
-      
-      if (invalidResults.length > 0) {
-        validationState.errors = invalidResults.flatMap(r => r.errors)
-        return false
-      }
-      
-      validationState.validFiles = results.map(r => r.file)
-      return true
-    } finally {
-      validationState.isValidating = false
-    }
-  }
-
-  return {
-    validationState,
-    validateSingleFile,
-    validateMultipleFiles
-  }
+  
+  return descriptions[ext] || `Fichier ${extension}`
 }
 
+// Export par défaut de toutes les fonctions
 export default {
-  validateFile,
-  validateFiles,
-  getFileExtension,
-  formatFileSize,
-  generateImagePreview,
-  verifyMagicBytes,
-  FileValidator,
-  useFileValidation,
+  // Constantes
   ALLOWED_EXTENSIONS,
   ALLOWED_MIME_TYPES,
-  MAX_FILE_SIZE
+  MAX_FILE_SIZE,
+  RECOMMENDED_MAX_SIZE,
+  
+  // Fonctions de validation
+  validateFile,
+  validateFiles,
+  validateFileSize,
+  validateExtension,
+  validateMimeType,
+  validateFileName,
+  
+  // Utilitaires
+  getFileExtension,
+  formatFileSize,
+  isLargeFile,
+  getExtensionDescription
 }

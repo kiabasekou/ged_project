@@ -38,16 +38,20 @@
                     :rules="[rules.required]"
                     prepend-inner-icon="mdi-calendar-star"
                   >
-                    <template v-slot:item="{ item, props }">
+                    <template #item="{ props, item }">
                       <v-list-item v-bind="props">
-                        <template v-slot:prepend>
-                          <v-icon :color="item.raw.color">{{ item.raw.icon }}</v-icon>
+                        <template #prepend>
+                          <v-icon :color="item.raw.color" class="mr-3">
+                            {{ item.raw.icon }}
+                          </v-icon>
                         </template>
                       </v-list-item>
                     </template>
-                    <template v-slot:selection="{ item }">
-                      <v-icon :color="item.raw.color" start>{{ item.raw.icon }}</v-icon>
-                      {{ item.raw.title }}
+                    <template #selection="{ item }">
+                      <v-icon :color="item.raw.color" start>
+                        {{ item.raw.icon }}
+                      </v-icon>
+                      {{ item.title }}
                     </template>
                   </v-select>
                 </v-col>
@@ -63,6 +67,7 @@
                     counter="200"
                     prepend-inner-icon="mdi-format-title"
                     placeholder="Ex: Audience TPI Libreville - Affaire Mba c/ Nguema"
+                    autofocus
                   />
                 </v-col>
 
@@ -81,10 +86,12 @@
                     prepend-inner-icon="mdi-folder"
                     clearable
                   >
-                    <template v-slot:item="{ item, props }">
+                    <template #item="{ props, item }">
                       <v-list-item v-bind="props">
-                        <template v-slot:subtitle>
-                          <span class="text-caption">{{ item.raw.reference_code }}</span>
+                        <template #subtitle>
+                          <span class="text-caption text-medium-emphasis">
+                            {{ item.raw.reference_code }}
+                          </span>
                         </template>
                       </v-list-item>
                     </template>
@@ -116,7 +123,7 @@
                   />
                 </v-col>
 
-                <!-- Journée entière ou horaire -->
+                <!-- Journée entière -->
                 <v-col cols="12" md="6">
                   <v-switch
                     v-model="form.all_day"
@@ -127,7 +134,7 @@
                   />
                 </v-col>
 
-                <!-- Horaires (si pas journée entière) -->
+                <!-- Horaires si pas journée entière -->
                 <template v-if="!form.all_day">
                   <v-col cols="12" md="6">
                     <v-text-field
@@ -136,11 +143,10 @@
                       label="Heure de début *"
                       variant="outlined"
                       density="comfortable"
-                      :rules="form.all_day ? [] : [rules.required]"
+                      :rules="[rules.required]"
                       prepend-inner-icon="mdi-clock-start"
                     />
                   </v-col>
-
                   <v-col cols="12" md="6">
                     <v-text-field
                       v-model="form.end_time"
@@ -148,7 +154,7 @@
                       label="Heure de fin *"
                       variant="outlined"
                       density="comfortable"
-                      :rules="form.all_day ? [] : [rules.required]"
+                      :rules="[rules.required]"
                       prepend-inner-icon="mdi-clock-end"
                     />
                   </v-col>
@@ -192,18 +198,27 @@
                     density="comfortable"
                     prepend-inner-icon="mdi-flag"
                   >
-                    <template v-slot:item="{ item, props }">
+                    <template #item="{ props, item }">
                       <v-list-item v-bind="props">
-                        <template v-slot:prepend>
-                          <v-icon :color="item.raw.color">{{ item.raw.icon }}</v-icon>
+                        <template #prepend>
+                          <v-icon :color="item.raw.color" class="mr-3">
+                            {{ item.raw.icon }}
+                          </v-icon>
+                        </template>
+                        <template #title>
+                          <span :class="item.raw.color + '--text'">{{ item.title }}</span>
                         </template>
                       </v-list-item>
+                    </template>
+                    <template #selection="{ item }">
+                      <v-icon :color="item.raw.color" start>{{ item.raw.icon }}</v-icon>
+                      {{ item.title }}
                     </template>
                   </v-select>
                 </v-col>
               </v-row>
 
-              <!-- Messages d'erreur -->
+              <!-- Message d'erreur -->
               <v-expand-transition>
                 <v-alert
                   v-if="error"
@@ -217,7 +232,7 @@
                 </v-alert>
               </v-expand-transition>
 
-              <!-- Actions -->
+              <!-- Boutons d'action -->
               <div class="d-flex justify-end gap-3 mt-6">
                 <v-btn
                   variant="outlined"
@@ -231,6 +246,7 @@
                 <v-btn
                   type="submit"
                   color="indigo"
+                  variant="elevated"
                   :loading="loading"
                 >
                   <v-icon start>mdi-check</v-icon>
@@ -241,7 +257,7 @@
           </v-card-text>
         </v-card>
 
-        <!-- Aide -->
+        <!-- Section Conseils -->
         <v-card elevation="1" class="mt-6 bg-blue-grey-lighten-5">
           <v-card-text>
             <h3 class="text-subtitle-1 font-weight-bold mb-3">
@@ -259,7 +275,7 @@
                 <strong>Formalités notariales :</strong> Précisez les pièces requises dans la description
               </li>
               <li>
-                <strong>Délais critiques :</strong> Utilisez la priorité "Haute" et activez un rappel
+                <strong>Délais critiques :</strong> Utilisez la priorité "Haute" ou "Urgente" et activez un rappel
               </li>
             </ul>
           </v-card-text>
@@ -270,7 +286,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAgendaStore } from '@/stores/agenda'
 import { useDossierStore } from '@/stores/dossier'
@@ -279,13 +295,14 @@ const router = useRouter()
 const agendaStore = useAgendaStore()
 const dossierStore = useDossierStore()
 
-// Données
+// Références
 const eventForm = ref(null)
 const loading = ref(false)
 const loadingDossiers = ref(false)
 const error = ref(null)
 const dossiers = ref([])
 
+// Formulaire réactif
 const form = reactive({
   type: 'RDV',
   title: '',
@@ -302,36 +319,11 @@ const form = reactive({
 
 // Options
 const eventTypes = [
-  { 
-    title: 'Audience', 
-    value: 'AUDIENCE', 
-    icon: 'mdi-gavel',
-    color: 'red-darken-2'
-  },
-  { 
-    title: 'Rendez-vous client', 
-    value: 'RDV', 
-    icon: 'mdi-account-clock',
-    color: 'blue'
-  },
-  { 
-    title: 'Formalité notariale', 
-    value: 'FORMALITE', 
-    icon: 'mdi-file-sign',
-    color: 'green'
-  },
-  { 
-    title: 'Congé', 
-    value: 'CONGE', 
-    icon: 'mdi-beach',
-    color: 'orange'
-  },
-  { 
-    title: 'Autre événement', 
-    value: 'AUTRE', 
-    icon: 'mdi-calendar-star',
-    color: 'grey'
-  }
+  { title: 'Audience', value: 'AUDIENCE', icon: 'mdi-gavel', color: 'red-darken-2' },
+  { title: 'Rendez-vous client', value: 'RDV', icon: 'mdi-account-clock', color: 'blue' },
+  { title: 'Formalité notariale', value: 'FORMALITE', icon: 'mdi-file-sign', color: 'green' },
+  { title: 'Congé', value: 'CONGE', icon: 'mdi-beach', color: 'orange' },
+  { title: 'Autre événement', value: 'AUTRE', icon: 'mdi-calendar-star', color: 'grey' }
 ]
 
 const reminderOptions = [
@@ -342,33 +334,18 @@ const reminderOptions = [
 ]
 
 const priorityOptions = [
-  { 
-    title: 'Normale', 
-    value: 'NORMAL',
-    icon: 'mdi-flag',
-    color: 'grey'
-  },
-  { 
-    title: 'Haute', 
-    value: 'HIGH',
-    icon: 'mdi-flag',
-    color: 'orange'
-  },
-  { 
-    title: 'Urgente', 
-    value: 'URGENT',
-    icon: 'mdi-flag',
-    color: 'red'
-  }
+  { title: 'Normale', value: 'NORMAL', icon: 'mdi-flag-outline', color: 'grey' },
+  { title: 'Haute', value: 'HIGH', icon: 'mdi-flag', color: 'orange' },
+  { title: 'Urgente', value: 'URGENT', icon: 'mdi-flag', color: 'red' }
 ]
 
-// Règles de validation
+// Règles
 const rules = {
   required: v => !!v || 'Ce champ est requis',
   maxLength: max => v => !v || v.length <= max || `Maximum ${max} caractères`
 }
 
-// Méthodes
+// Chargement des dossiers
 const loadDossiers = async () => {
   loadingDossiers.value = true
   try {
@@ -383,13 +360,16 @@ const loadDossiers = async () => {
     }))
   } catch (err) {
     console.error('Erreur chargement dossiers:', err)
+    error.value = 'Impossible de charger la liste des dossiers'
   } finally {
     loadingDossiers.value = false
   }
 }
 
+// Soumission
 const handleSubmit = async () => {
-  if (!eventForm.value.validate()) return
+  const { valid } = await eventForm.value.validate()
+  if (!valid) return
 
   loading.value = true
   error.value = null
@@ -402,37 +382,30 @@ const handleSubmit = async () => {
       location: form.location,
       start_date: form.start_date,
       all_day: form.all_day,
-      description: form.description
+      description: form.description,
+      reminder: form.reminder,
+      priority: form.priority
     }
 
-    // Ajouter horaires si pas journée entière
     if (!form.all_day) {
       eventData.start_time = form.start_time
-      eventData.end_date = form.start_date
       eventData.end_time = form.end_time
+      eventData.end_date = form.start_date  // si ton backend le requiert
     }
 
     await agendaStore.createEvent(eventData)
-
-    // Redirection vers l'agenda
     router.push({ name: 'Agenda' })
   } catch (err) {
     console.error('Erreur création événement:', err)
     error.value = err.response?.data?.detail || 
-                  'Erreur lors de la création de l\'événement'
+                  err.response?.data?.non_field_errors?.[0] ||
+                  'Erreur lors de la création de l\'événement. Veuillez réessayer.'
   } finally {
     loading.value = false
   }
 }
 
-// Chargement initial
 onMounted(() => {
   loadDossiers()
 })
 </script>
-
-<style scoped>
-.gap-3 {
-  gap: 12px;
-}
-</style>

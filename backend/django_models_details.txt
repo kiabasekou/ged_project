@@ -1,276 +1,1477 @@
 
-=== Application: django.contrib.admin ===
+(venv311) C:\Users\SOUARE Ahmed\dev\ged_project\backend>python get_models_complete.py
+✅ Fichier .env chargé depuis : C:\Users\SOUARE Ahmed\dev\ged_project\backend\.env
+🔧 Mode Développement : SQLite activé
+💾 Cache local en mémoire activé
 
---- Modèle: LogEntry ---
-Table: django_admin_log
-Champs:
-  - id (AutoField)
-  - action_time (DateTimeField)
-  - user (ForeignKey), relation -> User
-  - content_type (ForeignKey), relation -> ContentType
-  - object_id (TextField)
-  - object_repr (CharField), max_length=200
-  - action_flag (PositiveSmallIntegerField)
-  - change_message (TextField)
+    ╔════════════════════════════════════════════════════════════╗
+    ║          🔧 MODE DÉVELOPPEMENT ACTIVÉ                      ║
+    ╠════════════════════════════════════════════════════════════╣
+    ║  • Base de données : SQLite (db.sqlite3)                   ║
+    ║  • Cache : Mémoire locale                                  ║
+    ║  • Email : Console                                         ║
+    ║  • Rate limits : Souples (100/h, 10000/j)                  ║
+    ║  • Tokens JWT : 24h (au lieu de 1h)                        ║
+    ║  • Sécurité HTTPS : Désactivée                             ║
+    ║                                                            ║
+    ║  ⚠️  NE PAS UTILISER EN PRODUCTION                         ║
+    ╚════════════════════════════════════════════════════════════╝
 
-=== Application: django.contrib.auth ===
+================================================================================
+                    ANALYSE COMPLÈTE DES MODÈLES DJANGO
+                    GED CABINET - GABON
+================================================================================
 
---- Modèle: Permission ---
-Table: auth_permission
-Champs:
-  - group (ManyToManyRel), relation -> Group
-  - userobjectpermission (ManyToOneRel), relation -> UserObjectPermission
-  - groupobjectpermission (ManyToOneRel), relation -> GroupObjectPermission
-  - user (ManyToManyRel), relation -> User
-  - id (AutoField)
-  - name (CharField), max_length=255
-  - content_type (ForeignKey), relation -> ContentType
-  - codename (CharField), max_length=100
+Date: 2026-01-26 11:45:49
+Base de données: SQLite (développement)
+================================================================================
 
---- Modèle: Group ---
-Table: auth_group
-Champs:
-  - groupobjectpermission (ManyToOneRel), relation -> GroupObjectPermission
-  - user (ManyToManyRel), relation -> User
-  - id (AutoField)
-  - name (CharField), max_length=150
-  - permissions (ManyToManyField), relation -> Permission
 
-=== Application: django.contrib.contenttypes ===
+################################################################################
+# APPLICATION: rest_framework_simplejwt
+################################################################################
 
---- Modèle: ContentType ---
-Table: django_content_type
-Champs:
-  - logentry (ManyToOneRel), relation -> LogEntry
-  - permission (ManyToOneRel), relation -> Permission
-  - userobjectpermission (ManyToOneRel), relation -> UserObjectPermission
-  - groupobjectpermission (ManyToOneRel), relation -> GroupObjectPermission
-  - auditlog (ManyToOneRel), relation -> AuditLog
-  - id (AutoField)
-  - app_label (CharField), max_length=100
-  - model (CharField), max_length=100
 
-=== Application: django.contrib.sessions ===
 
---- Modèle: Session ---
-Table: django_session
-Champs:
-  - session_key (CharField), max_length=40
-  - session_data (TextField)
-  - expire_date (DateTimeField)
+################################################################################
+# APPLICATION: apps.core
+################################################################################
 
-=== Application: django.contrib.messages ===
 
-=== Application: django.contrib.staticfiles ===
 
-=== Application: rest_framework ===
+################################################################################
+# APPLICATION: apps.users
+################################################################################
 
-=== Application: rest_framework_simplejwt ===
+--------------------------------------------------------------------------------
+📋 MODÈLE: User
+--------------------------------------------------------------------------------
 
-=== Application: corsheaders ===
+🏷️  INFORMATIONS GÉNÉRALES:
+   Table: users_user
+   App: users
+   Verbose name: Utilisateur
+   Verbose name plural: Utilisateurs
 
-=== Application: django_filters ===
+📊 CHAMPS (28 champs):
 
-=== Application: guardian ===
+   └─ password
+      Type: CharField
+      max_length=128
+      null=False
+      blank=False
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x0000022874E71310>
+      verbose_name: mot de passe
 
---- Modèle: UserObjectPermission ---
-Table: guardian_userobjectpermission
-Champs:
-  - id (AutoField)
-  - permission (ForeignKey), relation -> Permission
-  - content_type (ForeignKey), relation -> ContentType
-  - object_pk (CharField), max_length=255
-  - user (ForeignKey), relation -> User
-  - content_object (GenericForeignKey)
+   └─ last_login
+      Type: DateTimeField
+      null=True
+      blank=True
+      verbose_name: dernière connexion
 
---- Modèle: GroupObjectPermission ---
-Table: guardian_groupobjectpermission
-Champs:
-  - id (AutoField)
-  - permission (ForeignKey), relation -> Permission
-  - content_type (ForeignKey), relation -> ContentType
-  - object_pk (CharField), max_length=255
-  - group (ForeignKey), relation -> Group
-  - content_object (GenericForeignKey)
+   └─ is_superuser
+      Type: BooleanField
+      null=False
+      blank=False
+      default=False
+      help_text: Précise que l’utilisateur possède toutes les permissions sans les assigner explicitement.
+      verbose_name: statut super-utilisateur
 
-=== Application: apps.core ===
+   └─ username
+      Type: CharField
+      max_length=150
+      null=False
+      blank=False
+      UNIQUE
+      Validators:
+       → <django.contrib.auth.validators.UnicodeUsernameValidator object at 0x0000022875345250>
+       → <django.core.validators.MaxLengthValidator object at 0x0000022875345510>
+      help_text: Requis. 150 caractères maximum. Uniquement des lettres, nombres et les caractères « @ », « . », « + », « - » et « _ ».
+      verbose_name: nom d’utilisateur
 
-=== Application: apps.users ===
+   └─ first_name
+      Type: CharField
+      max_length=150
+      null=False
+      blank=True
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x0000022874E73ED0>
+      verbose_name: prénom
 
---- Modèle: User ---
-Table: users_user
-Champs:
-  - logentry (ManyToOneRel), relation -> LogEntry
-  - userobjectpermission (ManyToOneRel), relation -> UserObjectPermission
-  - managed_dossiers (ManyToOneRel), relation -> Dossier
-  - accessible_dossiers (ManyToManyRel), relation -> Dossier
-  - created_folders (ManyToOneRel), relation -> Folder
-  - uploaded_documents (ManyToOneRel), relation -> Document
-  - audit_logs (ManyToOneRel), relation -> AuditLog
-  - created_events (ManyToOneRel), relation -> Event
-  - password (CharField), max_length=128
-  - last_login (DateTimeField)
-  - is_superuser (BooleanField)
-  - username (CharField), max_length=150
-  - first_name (CharField), max_length=150
-  - last_name (CharField), max_length=150
-  - email (EmailField), max_length=254
-  - is_staff (BooleanField)
-  - date_joined (DateTimeField)
-  - id (UUIDField), max_length=32
-  - role (CharField), max_length=20
-  - professional_id (CharField), max_length=50
-  - phone_number (CharField), max_length=20
-  - has_accepted_privacy_policy (BooleanField)
-  - privacy_policy_accepted_at (DateTimeField)
-  - created_at (DateTimeField)
-  - updated_at (DateTimeField)
-  - is_active (BooleanField)
-  - groups (ManyToManyField), relation -> Group
-  - user_permissions (ManyToManyField), relation -> Permission
+   └─ last_name
+      Type: CharField
+      max_length=150
+      null=False
+      blank=True
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x0000022875345810>
+      verbose_name: nom
 
-=== Application: apps.clients ===
+   └─ email
+      Type: EmailField
+      max_length=254
+      null=False
+      blank=True
+      Validators:
+       → <django.core.validators.EmailValidator object at 0x0000022873D03A90>
+       → <django.core.validators.MaxLengthValidator object at 0x0000022875345A10>
+      verbose_name: adresse électronique
 
---- Modèle: Client ---
-Table: clients_client
-Champs:
-  - dossiers (ManyToOneRel), relation -> Dossier
-  - id (UUIDField), max_length=32
-  - client_type (CharField), max_length=10
-  - first_name (CharField), max_length=150
-  - last_name (CharField), max_length=150
-  - date_of_birth (DateField)
-  - place_of_birth (CharField), max_length=150
-  - ni_number (CharField), max_length=50
-  - ni_type (CharField), max_length=20
-  - company_name (CharField), max_length=255
-  - rccm (CharField), max_length=50
-  - nif (CharField), max_length=10
-  - representative_name (CharField), max_length=255
-  - representative_role (CharField), max_length=100
-  - email (EmailField), max_length=254
-  - phone_primary (CharField), max_length=20
-  - phone_secondary (CharField), max_length=20
-  - address_line (CharField), max_length=255
-  - neighborhood (CharField), max_length=100
-  - city (CharField), max_length=100
-  - country (CharField), max_length=100
-  - data_source (CharField), max_length=255
-  - consent_given (BooleanField)
-  - consent_date (DateTimeField)
-  - retention_period_years (PositiveIntegerField)
-  - created_at (DateTimeField)
-  - updated_at (DateTimeField)
-  - is_active (BooleanField)
-  - notes (TextField)
+   └─ is_staff
+      Type: BooleanField
+      null=False
+      blank=False
+      default=False
+      help_text: Précise si l’utilisateur peut se connecter à ce site d'administration.
+      verbose_name: statut équipe
 
-=== Application: apps.dossiers ===
+   └─ date_joined
+      Type: DateTimeField
+      null=False
+      blank=False
+      default=now()
+      verbose_name: date d’inscription
 
---- Modèle: Dossier ---
-Table: dossiers_dossier
-Champs:
-  - folders (ManyToOneRel), relation -> Folder
-  - documents (ManyToOneRel), relation -> Document
-  - events (ManyToOneRel), relation -> Event
-  - id (UUIDField), max_length=32
-  - client (ForeignKey), relation -> Client
-  - responsible (ForeignKey), relation -> User
-  - title (CharField), max_length=300
-  - reference_code (CharField), max_length=30
-  - category (CharField), max_length=20
-  - status (CharField), max_length=15
-  - description (TextField)
-  - opponent (CharField), max_length=255
-  - jurisdiction (CharField), max_length=200
-  - critical_deadline (DateField)
-  - legal_basis (CharField), max_length=255
-  - retention_period_years (PositiveIntegerField)
-  - opening_date (DateField)
-  - closing_date (DateField)
-  - archived_date (DateTimeField)
-  - created_at (DateTimeField)
-  - updated_at (DateTimeField)
-  - assigned_users (ManyToManyField), relation -> User
+   └─ id
+      Type: UUIDField
+      max_length=32
+      null=False
+      blank=False
+      UNIQUE
+      default=uuid4()
+      verbose_name: Identifiant unique
 
-=== Application: apps.documents ===
+   └─ role
+      Type: CharField
+      max_length=20
+      null=False
+      blank=False
+      default=User.Role.STAGIAIRE
+      CHOICES:
+       → 'ADMIN': Administrateur système
+       → 'AVOCAT': Avocat
+       → 'NOTAIRE': Notaire
+       → 'CONSEIL_JURIDIQUE': Conseil juridique
+       → 'STAGIAIRE': Stagiaire / Collaborateur
+       → 'SECRETAIRE': Secrétaire / Clerc
+       → 'ASSISTANT': Assistant juridique
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x0000022874E71350>
+      help_text: Détermine les permissions par défaut dans l'application
+      verbose_name: Rôle dans le cabinet
 
---- Modèle: Folder ---
-Table: documents_folder
-Champs:
-  - subfolders (ManyToOneRel), relation -> Folder
-  - documents (ManyToOneRel), relation -> Document
-  - updated_at (DateTimeField)
-  - is_active (BooleanField)
-  - id (UUIDField), max_length=32
-  - name (CharField), max_length=150
-  - dossier (ForeignKey), relation -> Dossier
-  - parent (ForeignKey), relation -> Folder
-  - created_by (ForeignKey), relation -> User
-  - created_at (DateTimeField)
+   └─ professional_id
+      Type: CharField
+      max_length=50
+      null=True
+      blank=True
+      UNIQUE
+      Validators:
+       → <django.core.validators.RegexValidator object at 0x00000228753A8090>
+       → <django.core.validators.MaxLengthValidator object at 0x00000228753A8490>
+      help_text: Ex. : BAR/GAB/2023/001 pour un avocat ou NOT/GAB/001 pour un notaire
+      verbose_name: Numéro de carte professionnelle
 
---- Modèle: Document ---
-Table: documents_document
-Champs:
-  - next_versions (ManyToOneRel), relation -> Document
-  - created_at (DateTimeField)
-  - is_active (BooleanField)
-  - id (UUIDField), max_length=32
-  - dossier (ForeignKey), relation -> Dossier
-  - folder (ForeignKey), relation -> Folder
-  - uploaded_by (ForeignKey), relation -> User
-  - file (FileField), max_length=100
-  - title (CharField), max_length=300
-  - description (TextField)
-  - original_filename (CharField), max_length=255
-  - file_extension (CharField), max_length=10
-  - file_size (BigIntegerField)
-  - mime_type (CharField), max_length=100
-  - file_hash (CharField), max_length=64
-  - version (PositiveIntegerField)
-  - is_current_version (BooleanField)
-  - previous_version (ForeignKey), relation -> Document
-  - sensitivity (CharField), max_length=20
-  - retention_until (DateField)
-  - uploaded_at (DateTimeField)
-  - updated_at (DateTimeField)
+   └─ phone_number
+      Type: CharField
+      max_length=20
+      null=True
+      blank=True
+      Validators:
+       → <django.core.validators.RegexValidator object at 0x00000228753A8550>
+       → <django.core.validators.MaxLengthValidator object at 0x00000228753A8890>
+      verbose_name: Téléphone professionnel
 
-=== Application: apps.audit ===
+   └─ has_accepted_privacy_policy
+      Type: BooleanField
+      null=False
+      blank=False
+      default=False
+      help_text: Requis pour la conformité Loi 001/2011 modifiée 2023
+      verbose_name: A accepté la politique de confidentialité
 
---- Modèle: AuditLog ---
-Table: audit_auditlog
-Champs:
-  - id (UUIDField), max_length=32
-  - user (ForeignKey), relation -> User
-  - content_type (ForeignKey), relation -> ContentType
-  - object_id (UUIDField), max_length=32
-  - object_repr (CharField), max_length=255
-  - action_type (CharField), max_length=20
-  - changes (JSONField)
-  - sensitive_fields_hash (JSONField)
-  - description (TextField)
-  - ip_address (GenericIPAddressField), max_length=39
-  - user_agent (TextField)
-  - request_path (CharField), max_length=500
-  - session_key (CharField), max_length=40
-  - timestamp (DateTimeField)
-  - content_object (GenericForeignKey)
+   └─ privacy_policy_accepted_at
+      Type: DateTimeField
+      null=True
+      blank=True
+      verbose_name: Date d'acceptation de la politique de confidentialité
 
-=== Application: apps.agenda ===
+   └─ created_at
+      Type: DateTimeField
+      null=False
+      blank=False
+      default=now()
+      verbose_name: Date de création
 
---- Modèle: Event ---
-Table: agenda_event
-Champs:
-  - id (UUIDField), max_length=32
-  - title (CharField), max_length=255
-  - type (CharField), max_length=20
-  - start_date (DateField)
-  - start_time (TimeField)
-  - all_day (BooleanField)
-  - end_date (DateField)
-  - end_time (TimeField)
-  - location (CharField), max_length=255
-  - description (TextField)
-  - dossier (ForeignKey), relation -> Dossier
-  - created_by (ForeignKey), relation -> User
-  - created_at (DateTimeField)
-  - updated_at (DateTimeField)
+   └─ updated_at
+      Type: DateTimeField
+      null=False
+      blank=True
+      verbose_name: Dernière modification
+
+   └─ is_active
+      Type: BooleanField
+      null=False
+      blank=False
+      default=True
+      help_text: Désactiver plutôt que supprimer pour conserver l'historique
+      verbose_name: Compte actif
+
+   └─ groups
+      Type: ManyToManyField
+      null=False
+      blank=True
+      relation → Group
+      help_text: Les groupes dont fait partie cet utilisateur. Celui-ci obtient tous les droits de tous les groupes auxquels il appartient.
+      verbose_name: groupes
+
+   └─ user_permissions
+      Type: ManyToManyField
+      null=False
+      blank=True
+      relation → Permission
+      help_text: Permissions spécifiques à cet utilisateur.
+      verbose_name: permissions de l’utilisateur
+
+⚙️  META OPTIONS:
+   • Ordering: ['-created_at', 'last_name', 'first_name']
+   • Permissions: [('can_view_all_dossiers', 'Peut consulter tous les dossiers du cabinet'), ('can_manage_users', 'Peut gérer les comptes utilisateurs'), ('can_export_data', 'Peut exporter des données (RGPD)')]
+
+🔧 MÉTHODES PERSONNALISÉES:
+  • accept_privacy_policy(self)
+  • add_obj_perm(self, perm, obj)
+  • check_password(self, raw_password)
+  • del_obj_perm(self, perm, obj)
+  • email_user(self, subject, message, from_email=None, **kwargs)
+  • evict_obj_perms_cache(obj)
+  • get_all_permissions(self, obj=None)
+  • get_anonymous()
+  • get_full_name(self)
+  • get_group_permissions(self, obj=None)
+  • get_next_by_created_at(self, *, field=<django.db.models.fields.DateTimeField: created_at>, is_next=True, **kwargs)
+  • get_next_by_date_joined(self, *, field=<django.db.models.fields.DateTimeField: date_joined>, is_next=True, **kwargs)
+  • get_next_by_updated_at(self, *, field=<django.db.models.fields.DateTimeField: updated_at>, is_next=True, **kwargs)
+  • get_previous_by_created_at(self, *, field=<django.db.models.fields.DateTimeField: created_at>, is_next=False, **kwargs)
+  • get_previous_by_date_joined(self, *, field=<django.db.models.fields.DateTimeField: date_joined>, is_next=False, **kwargs)
+  • get_previous_by_updated_at(self, *, field=<django.db.models.fields.DateTimeField: updated_at>, is_next=False, **kwargs)
+  • get_role_display(self, *, field=<django.db.models.fields.CharField: role>)
+  • get_session_auth_fallback_hash(self)
+  • get_session_auth_hash(self)
+  • get_short_name(self)
+  • get_user_permissions(self, obj=None)
+  • get_username(self)
+  • has_module_perms(self, app_label)
+  • has_perm(self, perm, obj=None)
+  • has_perms(self, perm_list, obj=None)
+  • has_usable_password(self)
+  • natural_key(self)
+  • set_password(self, raw_password)
+  • set_unusable_password(self)
+
+
+
+################################################################################
+# APPLICATION: apps.clients
+################################################################################
+
+--------------------------------------------------------------------------------
+📋 MODÈLE: Client
+--------------------------------------------------------------------------------
+
+🏷️  INFORMATIONS GÉNÉRALES:
+   Table: clients_client
+   App: clients
+   Verbose name: Client
+   Verbose name plural: Clients
+
+📊 CHAMPS (29 champs):
+
+   └─ id
+      Type: UUIDField
+      max_length=32
+      null=False
+      blank=False
+      UNIQUE
+      default=uuid4()
+      verbose_name: Identifiant unique
+
+   └─ client_type
+      Type: CharField
+      max_length=10
+      null=False
+      blank=False
+      default=Client.ClientType.INDIVIDUAL
+      CHOICES:
+       → 'PHYSIQUE': Personne Physique
+       → 'MORALE': Personne Morale
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x00000228753AA710>
+      verbose_name: Type de client
+
+   └─ first_name
+      Type: CharField
+      max_length=150
+      null=False
+      blank=True
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x00000228753AA890>
+      verbose_name: Prénom(s)
+
+   └─ last_name
+      Type: CharField
+      max_length=150
+      null=False
+      blank=True
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x0000022874E73790>
+      verbose_name: Nom de famille
+
+   └─ date_of_birth
+      Type: DateField
+      null=True
+      blank=True
+      verbose_name: Date de naissance
+
+   └─ place_of_birth
+      Type: CharField
+      max_length=150
+      null=False
+      blank=True
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x0000022874E95A50>
+      verbose_name: Lieu de naissance
+
+   └─ ni_number
+      Type: CharField
+      max_length=50
+      null=False
+      blank=True
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x00000228753A8F10>
+      help_text: Ex. : 123456789 pour CNI gabonaise
+      verbose_name: N° pièce d'identité (CNI / Passeport)
+
+   └─ ni_type
+      Type: CharField
+      max_length=20
+      null=False
+      blank=True
+      CHOICES:
+       → 'CNI': Carte Nationale d'Identité
+       → 'PASSPORT': Passeport
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x0000022874E75950>
+      verbose_name: Type de pièce
+
+   └─ company_name
+      Type: CharField
+      max_length=255
+      null=False
+      blank=True
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x00000228753BB010>
+      verbose_name: Raison sociale
+
+   └─ rccm
+      Type: CharField
+      max_length=50
+      null=True
+      blank=True
+      UNIQUE
+      Validators:
+       → <django.core.validators.RegexValidator object at 0x0000022874F060D0>
+       → <django.core.validators.MaxLengthValidator object at 0x0000022875387FD0>
+      verbose_name: N° RCCM
+
+   └─ nif
+      Type: CharField
+      max_length=20
+      null=True
+      blank=True
+      UNIQUE
+      Validators:
+       → <django.core.validators.RegexValidator object at 0x00000228753BB190>
+       → <django.core.validators.MaxLengthValidator object at 0x0000022874E96B50>
+      verbose_name: NIF / Identifiant Fiscal Unique
+
+   └─ representative_name
+      Type: CharField
+      max_length=255
+      null=False
+      blank=True
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x0000022874E73510>
+      verbose_name: Nom du représentant légal
+
+   └─ representative_role
+      Type: CharField
+      max_length=100
+      null=False
+      blank=True
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x0000022874E66DD0>
+      verbose_name: Fonction du représentant
+
+   └─ email
+      Type: EmailField
+      max_length=254
+      null=True
+      blank=True
+      UNIQUE
+      Validators:
+       → <django.core.validators.EmailValidator object at 0x0000022873D03A90>
+       → <django.core.validators.EmailValidator object at 0x0000022874E72FD0>
+       → <django.core.validators.MaxLengthValidator object at 0x00000228753BB550>
+      verbose_name: Adresse email principale
+
+   └─ phone_primary
+      Type: CharField
+      max_length=20
+      null=False
+      blank=False
+      Validators:
+       → <django.core.validators.RegexValidator object at 0x00000228753BB490>
+       → <django.core.validators.MaxLengthValidator object at 0x00000228753BB7D0>
+      help_text: Ex. : +241 01 23 45 67
+      verbose_name: Téléphone principal
+
+   └─ phone_secondary
+      Type: CharField
+      max_length=20
+      null=True
+      blank=True
+      Validators:
+       → <django.core.validators.RegexValidator object at 0x00000228753BB490>
+       → <django.core.validators.MaxLengthValidator object at 0x00000228753BB950>
+      verbose_name: Téléphone secondaire
+
+   └─ address_line
+      Type: CharField
+      max_length=255
+      null=False
+      blank=True
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x00000228753BBB10>
+      verbose_name: Rue / BP
+
+   └─ neighborhood
+      Type: CharField
+      max_length=100
+      null=False
+      blank=True
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x00000228753BBCD0>
+      help_text: Ex. : Glass, Louis, Akébé, Nkembo
+      verbose_name: Quartier
+
+   └─ city
+      Type: CharField
+      max_length=100
+      null=False
+      blank=False
+      default='Libreville'
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x00000228753BBE90>
+      verbose_name: Ville
+
+   └─ country
+      Type: CharField
+      max_length=100
+      null=False
+      blank=False
+      default='Gabon'
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x00000228753C4050>
+      verbose_name: Pays
+
+   └─ data_source
+      Type: CharField
+      max_length=255
+      null=False
+      blank=True
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x00000228753C4290>
+      help_text: Ex. : Fournies par le client, acte notarié, jugement...
+      verbose_name: Source des données
+
+   └─ consent_given
+      Type: BooleanField
+      null=False
+      blank=False
+      default=False
+      help_text: Coché si le client a été informé et a consenti au traitement
+      verbose_name: Consentement RGPD obtenu
+
+   └─ consent_date
+      Type: DateTimeField
+      null=True
+      blank=True
+      verbose_name: Date du consentement
+
+   └─ retention_period_years
+      Type: PositiveIntegerField
+      null=False
+      blank=False
+      default=10
+      help_text: Au-delà : archivage ou anonymisation. Illimité pour actes notariés.
+      verbose_name: Durée de conservation (années)
+
+   └─ created_at
+      Type: DateTimeField
+      null=False
+      blank=False
+      default=now()
+      verbose_name: created at
+
+   └─ updated_at
+      Type: DateTimeField
+      null=False
+      blank=True
+      verbose_name: updated at
+
+   └─ is_active
+      Type: BooleanField
+      null=False
+      blank=False
+      default=True
+      verbose_name: Client actif
+
+   └─ notes
+      Type: TextField
+      null=False
+      blank=True
+      verbose_name: Notes internes (confidentielles)
+
+🔒 CONTRAINTES:
+  • UniqueConstraint: unique_ni_per_individual
+    Fields: ['ni_number', 'ni_type']
+    Condition: (AND: ('client_type', 'PHYSIQUE'))
+
+📑 INDEX:
+  • Index 'clients_cli_last_na_198e2f_idx': ['last_name', 'first_name']
+  • Index 'clients_cli_company_9dfa94_idx': ['company_name']
+  • Index 'clients_cli_nif_e3c63a_idx': ['nif']
+  • Index 'clients_cli_rccm_e5c8fa_idx': ['rccm']
+
+⚙️  META OPTIONS:
+   • Ordering: ['-created_at']
+
+🔧 MÉTHODES PERSONNALISÉES:
+  • get_client_type_display(self, *, field=<django.db.models.fields.CharField: client_type>)
+  • get_next_by_created_at(self, *, field=<django.db.models.fields.DateTimeField: created_at>, is_next=True, **kwargs)
+  • get_next_by_updated_at(self, *, field=<django.db.models.fields.DateTimeField: updated_at>, is_next=True, **kwargs)
+  • get_ni_type_display(self, *, field=<django.db.models.fields.CharField: ni_type>)
+  • get_previous_by_created_at(self, *, field=<django.db.models.fields.DateTimeField: created_at>, is_next=False, **kwargs)
+  • get_previous_by_updated_at(self, *, field=<django.db.models.fields.DateTimeField: updated_at>, is_next=False, **kwargs)
+  • grant_consent(self)
+
+
+
+################################################################################
+# APPLICATION: apps.dossiers
+################################################################################
+
+--------------------------------------------------------------------------------
+📋 MODÈLE: Dossier
+--------------------------------------------------------------------------------
+
+🏷️  INFORMATIONS GÉNÉRALES:
+   Table: dossiers_dossier
+   App: dossiers
+   Verbose name: Dossier
+   Verbose name plural: Dossiers
+
+📊 CHAMPS (22 champs):
+
+   └─ id
+      Type: UUIDField
+      max_length=32
+      null=False
+      blank=False
+      UNIQUE
+      default=uuid4()
+      verbose_name: Identifiant unique
+
+   └─ client
+      Type: ForeignKey
+      null=False
+      blank=False
+      relation → Client
+      verbose_name: Client
+
+   └─ responsible
+      Type: ForeignKey
+      null=False
+      blank=False
+      relation → User
+      verbose_name: Responsable principal
+
+   └─ title
+      Type: CharField
+      max_length=300
+      null=False
+      blank=False
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x0000022874E66CD0>
+      verbose_name: Intitulé du dossier
+
+   └─ reference_code
+      Type: CharField
+      max_length=30
+      null=False
+      blank=False
+      UNIQUE
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x00000228753D0B90>
+      help_text: Générée automatiquement : GAB-YYYY-NNNN
+      verbose_name: Référence interne
+
+   └─ category
+      Type: CharField
+      max_length=20
+      null=False
+      blank=False
+      default=Dossier.Category.AUTRE
+      CHOICES:
+       → 'CONTENTIEUX': Contentieux (civil, pénal, administratif)
+       → 'CONSEIL': Conseil juridique / Avis
+       → 'RECOUVREMENT': Recouvrement de créances
+       → 'TRAVAIL': Droit du travail
+       → 'IMMOBILIER': Actes immobiliers / Foncier
+       → 'SUCCESSION': Succession / Partage
+       → 'MARIAGE': Contrat de mariage / Régime matrimonial
+       → 'DONATION': Donation / Libéralité
+       → 'SOCIETE': Constitution / Modification société OHADA
+       → 'FAMILLE': Divorce, garde, filiation
+       → 'COMMERCIAL': Droit commercial OHADA
+       → 'AUTRE': Autre
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x00000228753D0DD0>
+      verbose_name: Catégorie
+
+   └─ status
+      Type: CharField
+      max_length=15
+      null=False
+      blank=False
+      default=Dossier.Status.OPEN
+      CHOICES:
+       → 'OUVERT': Ouvert / En cours
+       → 'ATTENTE': En attente de pièces ou décision
+       → 'SUSPENDU': Suspendu
+       → 'CLOTURE': Clôturé
+       → 'ARCHIVE': Archivé
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x00000228753D1110>
+      verbose_name: Statut
+
+   └─ description
+      Type: TextField
+      null=False
+      blank=True
+      verbose_name: Résumé et notes confidentielles
+
+   └─ opponent
+      Type: CharField
+      max_length=255
+      null=False
+      blank=True
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x00000228753D13D0>
+      verbose_name: Partie adverse / Opposant
+
+   └─ jurisdiction
+      Type: CharField
+      max_length=200
+      null=False
+      blank=True
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x0000022874E72150>
+      verbose_name: Juridiction / Tribunal / Office notarial
+
+   └─ critical_deadline
+      Type: DateField
+      null=True
+      blank=True
+      verbose_name: Délai critique / Audience / Formalité
+
+   └─ legal_basis
+      Type: CharField
+      max_length=255
+      null=False
+      blank=True
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x00000228753D1850>
+      help_text: Ex. : Exécution mandat, obligation légale, intérêt légitime
+      verbose_name: Base légale du traitement
+
+   └─ retention_period_years
+      Type: PositiveIntegerField
+      null=False
+      blank=False
+      default=10
+      help_text: Illimitée pour actes notariés authentiques
+      verbose_name: Durée de conservation (années)
+
+   └─ opening_date
+      Type: DateField
+      null=False
+      blank=False
+      default=now()
+      verbose_name: Date d'ouverture
+
+   └─ closing_date
+      Type: DateField
+      null=True
+      blank=True
+      verbose_name: Date de clôture
+
+   └─ archived_date
+      Type: DateTimeField
+      null=True
+      blank=True
+      verbose_name: archived date
+
+   └─ created_at
+      Type: DateTimeField
+      null=False
+      blank=False
+      default=now()
+      verbose_name: created at
+
+   └─ updated_at
+      Type: DateTimeField
+      null=False
+      blank=True
+      verbose_name: updated at
+
+   └─ assigned_users
+      Type: ManyToManyField
+      null=False
+      blank=True
+      relation → User
+      help_text: Clercs, stagiaires ou collaborateurs ayant accès au dossier
+      verbose_name: Utilisateurs autorisés
+
+🔒 CONTRAINTES:
+  • CheckConstraint: closing_date_after_opening
+
+📑 INDEX:
+  • Index 'dossiers_do_referen_927f6f_idx': ['reference_code']
+  • Index 'dossiers_do_client__4f1506_idx': ['client']
+  • Index 'dossiers_do_respons_32ec7a_idx': ['responsible']
+  • Index 'dossiers_do_status_f35af7_idx': ['status']
+  • Index 'dossiers_do_categor_103237_idx': ['category']
+  • Index 'dossiers_do_critica_01e771_idx': ['critical_deadline']
+  • Index 'dossiers_do_opening_4b932d_idx': ['opening_date']
+
+⚙️  META OPTIONS:
+   • Ordering: ['-opening_date', '-created_at']
+   • Permissions: [('can_view_confidential_dossier', 'Peut consulter les dossiers confidentiels'), ('can_archive_dossier', 'Peut archiver un dossier'), ('assign_users_dossier', 'Peut assigner des collaborateurs au dossier'), ('view_all_dossiers', 'Peut voir tous les dossiers du cabinet'), ('manage_dossier_permissions', "Peut gérer les permissions d'un dossier")]
+
+🔧 MÉTHODES PERSONNALISÉES:
+  • generate_reference_code(self)
+  • get_category_display(self, *, field=<django.db.models.fields.CharField: category>)
+  • get_next_by_created_at(self, *, field=<django.db.models.fields.DateTimeField: created_at>, is_next=True, **kwargs)
+  • get_next_by_opening_date(self, *, field=<django.db.models.fields.DateField: opening_date>, is_next=True, **kwargs)
+  • get_next_by_updated_at(self, *, field=<django.db.models.fields.DateTimeField: updated_at>, is_next=True, **kwargs)
+  • get_previous_by_created_at(self, *, field=<django.db.models.fields.DateTimeField: created_at>, is_next=False, **kwargs)
+  • get_previous_by_opening_date(self, *, field=<django.db.models.fields.DateField: opening_date>, is_next=False, **kwargs)
+  • get_previous_by_updated_at(self, *, field=<django.db.models.fields.DateTimeField: updated_at>, is_next=False, **kwargs)
+  • get_status_display(self, *, field=<django.db.models.fields.CharField: status>)
+
+
+
+################################################################################
+# APPLICATION: apps.documents
+################################################################################
+
+--------------------------------------------------------------------------------
+📋 MODÈLE: Folder
+--------------------------------------------------------------------------------
+
+🏷️  INFORMATIONS GÉNÉRALES:
+   Table: documents_folder
+   App: documents
+   Verbose name: Dossier
+   Verbose name plural: Dossiers
+
+📊 CHAMPS (10 champs):
+
+   └─ updated_at
+      Type: DateTimeField
+      null=False
+      blank=True
+      help_text: Date et heure de dernière modification
+      verbose_name: Modifié le
+
+   └─ is_active
+      Type: BooleanField
+      null=False
+      blank=False
+      default=True
+      help_text: Désactiver au lieu de supprimer (soft-delete)
+      verbose_name: Actif
+
+   └─ id
+      Type: UUIDField
+      max_length=32
+      null=False
+      blank=False
+      UNIQUE
+      default=uuid4()
+      verbose_name: id
+
+   └─ name
+      Type: CharField
+      max_length=150
+      null=False
+      blank=False
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x00000228753E1510>
+      verbose_name: Nom du dossier
+
+   └─ dossier
+      Type: ForeignKey
+      null=False
+      blank=False
+      relation → Dossier
+      verbose_name: Dossier juridique
+
+   └─ parent
+      Type: ForeignKey
+      null=True
+      blank=True
+      relation → Folder
+      verbose_name: Dossier parent
+
+   └─ created_by
+      Type: ForeignKey
+      null=False
+      blank=False
+      relation → User
+      verbose_name: Créé par
+
+   └─ created_at
+      Type: DateTimeField
+      null=False
+      blank=True
+      verbose_name: created at
+
+🔒 CONTRAINTES:
+  • CheckConstraint: folder_no_self_parent
+
+⚙️  META OPTIONS:
+   • Ordering: ['name']
+
+🔧 MÉTHODES PERSONNALISÉES:
+  • get_full_path(self) -> str
+  • get_next_by_created_at(self, *, field=<django.db.models.fields.DateTimeField: created_at>, is_next=True, **kwargs)
+  • get_next_by_updated_at(self, *, field=<django.db.models.fields.DateTimeField: updated_at>, is_next=True, **kwargs)
+  • get_previous_by_created_at(self, *, field=<django.db.models.fields.DateTimeField: created_at>, is_next=False, **kwargs)
+  • get_previous_by_updated_at(self, *, field=<django.db.models.fields.DateTimeField: updated_at>, is_next=False, **kwargs)
+  • restore(self)
+  • soft_delete(self)
+
+--------------------------------------------------------------------------------
+📋 MODÈLE: Document
+--------------------------------------------------------------------------------
+
+🏷️  INFORMATIONS GÉNÉRALES:
+   Table: documents_document
+   App: documents
+   Verbose name: Document
+   Verbose name plural: Documents
+
+📊 CHAMPS (22 champs):
+
+   └─ created_at
+      Type: DateTimeField
+      null=False
+      blank=True
+      help_text: Date et heure de création
+      verbose_name: Créé le
+
+   └─ is_active
+      Type: BooleanField
+      null=False
+      blank=False
+      default=True
+      help_text: Désactiver au lieu de supprimer (soft-delete)
+      verbose_name: Actif
+
+   └─ id
+      Type: UUIDField
+      max_length=32
+      null=False
+      blank=False
+      UNIQUE
+      default=uuid4()
+      verbose_name: id
+
+   └─ dossier
+      Type: ForeignKey
+      null=False
+      blank=False
+      relation → Dossier
+      verbose_name: Dossier juridique
+
+   └─ folder
+      Type: ForeignKey
+      null=True
+      blank=True
+      relation → Folder
+      verbose_name: Sous-dossier
+
+   └─ uploaded_by
+      Type: ForeignKey
+      null=False
+      blank=False
+      relation → User
+      verbose_name: Uploadé par
+
+   └─ file
+      Type: FileField
+      max_length=100
+      null=False
+      blank=False
+      verbose_name: Fichier
+
+   └─ title
+      Type: CharField
+      max_length=300
+      null=False
+      blank=False
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x000002287543BA10>
+      verbose_name: Titre
+
+   └─ description
+      Type: TextField
+      null=False
+      blank=True
+      verbose_name: Description
+
+   └─ original_filename
+      Type: CharField
+      max_length=255
+      null=False
+      blank=False
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x000002287543BB90>
+      verbose_name: Nom original
+
+   └─ file_extension
+      Type: CharField
+      max_length=10
+      null=False
+      blank=False
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x000002287543BD10>
+      verbose_name: Extension
+
+   └─ file_size
+      Type: BigIntegerField
+      null=False
+      blank=False
+      verbose_name: Taille (octets)
+
+   └─ mime_type
+      Type: CharField
+      max_length=100
+      null=False
+      blank=False
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x000002287543BE90>
+      verbose_name: Type MIME
+
+   └─ file_hash
+      Type: CharField
+      max_length=64
+      null=False
+      blank=False
+      UNIQUE
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x0000022875448090>
+      help_text: Empreinte cryptographique garantissant l'intégrité
+      verbose_name: Hash SHA-256
+
+   └─ version
+      Type: PositiveIntegerField
+      null=False
+      blank=False
+      default=1
+      verbose_name: Numéro de version
+
+   └─ is_current_version
+      Type: BooleanField
+      null=False
+      blank=False
+      default=True
+      help_text: True uniquement pour la dernière version
+      verbose_name: Version actuelle
+
+   └─ previous_version
+      Type: ForeignKey
+      null=True
+      blank=True
+      relation → Document
+      verbose_name: Version précédente
+
+   └─ sensitivity
+      Type: CharField
+      max_length=20
+      null=False
+      blank=False
+      default='internal'
+      CHOICES:
+       → 'public': Public
+       → 'internal': Usage Interne
+       → 'confidential': Confidentiel
+       → 'secret': Secret Professionnel
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x0000022874E76CD0>
+      verbose_name: Niveau de sensibilité
+
+   └─ retention_until
+      Type: DateField
+      null=True
+      blank=True
+      help_text: Date de suppression automatique (RGPD)
+      verbose_name: Conservation jusqu'au
+
+   └─ uploaded_at
+      Type: DateTimeField
+      null=False
+      blank=True
+      verbose_name: Uploadé le
+
+   └─ updated_at
+      Type: DateTimeField
+      null=False
+      blank=True
+      verbose_name: Modifié le
+
+🔒 CONTRAINTES:
+  • UniqueConstraint: unique_current_version_per_dossier
+    Fields: ['dossier', 'original_filename']
+    Condition: (AND: ('is_current_version', True))
+  • CheckConstraint: version_integrity_check
+  • CheckConstraint: current_version_must_have_history
+
+📑 INDEX:
+  • Index 'documents_d_dossier_739670_idx': ['dossier', 'is_current_version']
+  • Index 'documents_d_file_ha_a7f76e_idx': ['file_hash']
+  • Index 'documents_d_uploade_65506e_idx': ['uploaded_at']
+  • Index 'documents_d_origina_0f3879_idx': ['original_filename']
+
+⚙️  META OPTIONS:
+   • Ordering: ['-uploaded_at']
+
+🔧 MÉTHODES PERSONNALISÉES:
+  • create_new_version(self, new_file, uploaded_by, **metadata)
+  • get_absolute_url(self)
+  • get_next_by_created_at(self, *, field=<django.db.models.fields.DateTimeField: created_at>, is_next=True, **kwargs)
+  • get_next_by_updated_at(self, *, field=<django.db.models.fields.DateTimeField: updated_at>, is_next=True, **kwargs)
+  • get_next_by_uploaded_at(self, *, field=<django.db.models.fields.DateTimeField: uploaded_at>, is_next=True, **kwargs)
+  • get_previous_by_created_at(self, *, field=<django.db.models.fields.DateTimeField: created_at>, is_next=False, **kwargs)
+  • get_previous_by_updated_at(self, *, field=<django.db.models.fields.DateTimeField: updated_at>, is_next=False, **kwargs)
+  • get_previous_by_uploaded_at(self, *, field=<django.db.models.fields.DateTimeField: uploaded_at>, is_next=False, **kwargs)
+  • get_sensitivity_display(self, *, field=<django.db.models.fields.CharField: sensitivity>)
+  • get_version_history(self)
+  • restore(self)
+  • soft_delete(self)
+  • verify_integrity(self) -> bool
+
+
+
+################################################################################
+# APPLICATION: apps.audit
+################################################################################
+
+--------------------------------------------------------------------------------
+📋 MODÈLE: AuditLog
+--------------------------------------------------------------------------------
+
+🏷️  INFORMATIONS GÉNÉRALES:
+   Table: audit_auditlog
+   App: audit
+   Verbose name: Entrée d'Audit
+   Verbose name plural: Journal d'Audit
+
+📊 CHAMPS (15 champs):
+
+   └─ id
+      Type: UUIDField
+      max_length=32
+      null=False
+      blank=False
+      UNIQUE
+      default=uuid4()
+      verbose_name: id
+
+   └─ user
+      Type: ForeignKey
+      null=True
+      blank=False
+      relation → User
+      verbose_name: Utilisateur
+
+   └─ content_type
+      Type: ForeignKey
+      null=False
+      blank=False
+      relation → ContentType
+      verbose_name: Type d'objet
+
+   └─ object_id
+      Type: UUIDField
+      max_length=32
+      null=False
+      blank=False
+      verbose_name: ID de l'objet
+
+   └─ object_repr
+      Type: CharField
+      max_length=255
+      null=False
+      blank=False
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x0000022875459190>
+      verbose_name: Représentation
+
+   └─ action_type
+      Type: CharField
+      max_length=20
+      null=False
+      blank=False
+      CHOICES:
+       → 'CREATE': Création
+       → 'READ': Lecture
+       → 'UPDATE': Modification
+       → 'DELETE': Suppression
+       → 'DOWNLOAD': Téléchargement
+       → 'UPLOAD': Upload
+       → 'RESTORE': Restauration
+       → 'INTEGRITY_CHECK': Vérification Intégrité
+       → 'INTEGRITY_FAILURE': Échec Intégrité
+       → 'LOGIN': Connexion
+       → 'LOGOUT': Déconnexion
+       → 'LOGIN_FAILED': Échec Connexion
+       → 'PERMISSION_DENIED': Accès Refusé
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x0000022875459350>
+      verbose_name: Type d'action
+
+   └─ changes
+      Type: JSONField
+      null=False
+      blank=True
+      default=dict()
+      help_text: Données sensibles automatiquement anonymisées
+      verbose_name: Changements
+
+   └─ sensitive_fields_hash
+      Type: JSONField
+      null=False
+      blank=True
+      default=dict()
+      verbose_name: Hash des champs sensibles
+
+   └─ description
+      Type: TextField
+      null=False
+      blank=True
+      verbose_name: Description
+
+   └─ ip_address
+      Type: GenericIPAddressField
+      max_length=39
+      null=True
+      blank=True
+      Validators:
+       → validate_ipv46_address
+      verbose_name: Adresse IP
+
+   └─ user_agent
+      Type: TextField
+      null=False
+      blank=True
+      verbose_name: User Agent
+
+   └─ request_path
+      Type: CharField
+      max_length=500
+      null=False
+      blank=True
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x0000022875459610>
+      verbose_name: Chemin requête
+
+   └─ session_key
+      Type: CharField
+      max_length=40
+      null=False
+      blank=True
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x0000022875459790>
+      verbose_name: Clé de session
+
+   └─ timestamp
+      Type: DateTimeField
+      null=False
+      blank=True
+      verbose_name: Horodatage
+
+   └─ content_object
+      Type: GenericForeignKey
+
+📑 INDEX:
+  • Index 'audit_audit_user_id_e8be02_idx': ['user', 'timestamp']
+  • Index 'audit_audit_content_4c2ead_idx': ['content_type', 'object_id']
+  • Index 'audit_audit_action__74f5dd_idx': ['action_type', 'timestamp']
+  • Index 'audit_audit_ip_addr_685e3f_idx': ['ip_address']
+  • Index 'audit_audit_timesta_19e18a_idx': ['timestamp']
+
+⚙️  META OPTIONS:
+   • Ordering: ['-timestamp']
+
+🔧 MÉTHODES PERSONNALISÉES:
+  • get_action_type_display(self, *, field=<django.db.models.fields.CharField: action_type>)
+  • get_changes_display(self) -> str
+  • get_next_by_timestamp(self, *, field=<django.db.models.fields.DateTimeField: timestamp>, is_next=True, **kwargs)
+  • get_previous_by_timestamp(self, *, field=<django.db.models.fields.DateTimeField: timestamp>, is_next=False, **kwargs)
+  • verify_sensitive_field(self, field_name: str, value: str) -> bool
+
+
+
+################################################################################
+# APPLICATION: apps.agenda
+################################################################################
+
+--------------------------------------------------------------------------------
+📋 MODÈLE: Event
+--------------------------------------------------------------------------------
+
+🏷️  INFORMATIONS GÉNÉRALES:
+   Table: agenda_event
+   App: agenda
+   Verbose name: Événement calendrier
+   Verbose name plural: Événements calendrier
+
+📊 CHAMPS (14 champs):
+
+   └─ id
+      Type: UUIDField
+      max_length=32
+      null=False
+      blank=False
+      UNIQUE
+      default=uuid4()
+      verbose_name: id
+
+   └─ title
+      Type: CharField
+      max_length=255
+      null=False
+      blank=False
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x000002287545E410>
+      verbose_name: Titre
+
+   └─ type
+      Type: CharField
+      max_length=20
+      null=False
+      blank=False
+      default=Event.EventType.AUTRE
+      CHOICES:
+       → 'AUDIENCE': Audience / Plaidoirie
+       → 'RDV': Rendez-vous client
+       → 'FORMALITE': Formalité notariale
+       → 'CONGE': Congé / Absence
+       → 'AUTRE': Autre événement
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x000002287545E350>
+      verbose_name: Type d'événement
+
+   └─ start_date
+      Type: DateField
+      null=False
+      blank=False
+      verbose_name: Date de début
+
+   └─ start_time
+      Type: TimeField
+      null=True
+      blank=True
+      verbose_name: Heure de début
+
+   └─ all_day
+      Type: BooleanField
+      null=False
+      blank=False
+      default=True
+      verbose_name: Journée entière
+
+   └─ end_date
+      Type: DateField
+      null=True
+      blank=True
+      verbose_name: Date de fin
+
+   └─ end_time
+      Type: TimeField
+      null=True
+      blank=True
+      verbose_name: Heure de fin
+
+   └─ location
+      Type: CharField
+      max_length=255
+      null=False
+      blank=True
+      Validators:
+       → <django.core.validators.MaxLengthValidator object at 0x000002287545EDD0>
+      verbose_name: Lieu
+
+   └─ description
+      Type: TextField
+      null=False
+      blank=True
+      verbose_name: Description / Notes
+
+   └─ dossier
+      Type: ForeignKey
+      null=True
+      blank=True
+      relation → Dossier
+      verbose_name: Dossier lié
+
+   └─ created_by
+      Type: ForeignKey
+      null=True
+      blank=False
+      relation → User
+      verbose_name: Créé par
+
+   └─ created_at
+      Type: DateTimeField
+      null=False
+      blank=False
+      default=now()
+      verbose_name: Créé le
+
+   └─ updated_at
+      Type: DateTimeField
+      null=False
+      blank=True
+      verbose_name: Mis à jour le
+
+📑 INDEX:
+  • Index 'agenda_even_start_d_c7bd52_idx': ['start_date']
+  • Index 'agenda_even_type_e33fb7_idx': ['type']
+  • Index 'agenda_even_dossier_ec90e1_idx': ['dossier']
+
+⚙️  META OPTIONS:
+   • Ordering: ['-start_date', '-start_time']
+
+🔧 MÉTHODES PERSONNALISÉES:
+  • get_next_by_created_at(self, *, field=<django.db.models.fields.DateTimeField: created_at>, is_next=True, **kwargs)
+  • get_next_by_start_date(self, *, field=<django.db.models.fields.DateField: start_date>, is_next=True, **kwargs)
+  • get_next_by_updated_at(self, *, field=<django.db.models.fields.DateTimeField: updated_at>, is_next=True, **kwargs)
+  • get_previous_by_created_at(self, *, field=<django.db.models.fields.DateTimeField: created_at>, is_next=False, **kwargs)
+  • get_previous_by_start_date(self, *, field=<django.db.models.fields.DateField: start_date>, is_next=False, **kwargs)
+  • get_previous_by_updated_at(self, *, field=<django.db.models.fields.DateTimeField: updated_at>, is_next=False, **kwargs)
+  • get_type_display(self, *, field=<django.db.models.fields.CharField: type>)
+
+
+
+
+================================================================================
+                         RÉSUMÉ DES CHOIX (CHOICES)
+================================================================================
+
+AuditLog.action_type:
+  'CREATE' → Création
+  'READ' → Lecture
+  'UPDATE' → Modification
+  'DELETE' → Suppression
+  'DOWNLOAD' → Téléchargement
+  'UPLOAD' → Upload
+  'RESTORE' → Restauration
+  'INTEGRITY_CHECK' → Vérification Intégrité
+  'INTEGRITY_FAILURE' → Échec Intégrité
+  'LOGIN' → Connexion
+  'LOGOUT' → Déconnexion
+  'LOGIN_FAILED' → Échec Connexion
+  'PERMISSION_DENIED' → Accès Refusé
+
+Client.client_type:
+  'PHYSIQUE' → Personne Physique
+  'MORALE' → Personne Morale
+
+Client.ni_type:
+  'CNI' → Carte Nationale d'Identité
+  'PASSPORT' → Passeport
+
+Document.sensitivity:
+  'public' → Public
+  'internal' → Usage Interne
+  'confidential' → Confidentiel
+  'secret' → Secret Professionnel
+
+Dossier.category:
+  'CONTENTIEUX' → Contentieux (civil, pénal, administratif)
+  'CONSEIL' → Conseil juridique / Avis
+  'RECOUVREMENT' → Recouvrement de créances
+  'TRAVAIL' → Droit du travail
+  'IMMOBILIER' → Actes immobiliers / Foncier
+  'SUCCESSION' → Succession / Partage
+  'MARIAGE' → Contrat de mariage / Régime matrimonial
+  'DONATION' → Donation / Libéralité
+  'SOCIETE' → Constitution / Modification société OHADA
+  'FAMILLE' → Divorce, garde, filiation
+  'COMMERCIAL' → Droit commercial OHADA
+  'AUTRE' → Autre
+
+Dossier.status:
+  'OUVERT' → Ouvert / En cours
+  'ATTENTE' → En attente de pièces ou décision
+  'SUSPENDU' → Suspendu
+  'CLOTURE' → Clôturé
+  'ARCHIVE' → Archivé
+
+Event.type:
+  'AUDIENCE' → Audience / Plaidoirie
+  'RDV' → Rendez-vous client
+  'FORMALITE' → Formalité notariale
+  'CONGE' → Congé / Absence
+  'AUTRE' → Autre événement
+
+User.role:
+  'ADMIN' → Administrateur système
+  'AVOCAT' → Avocat
+  'NOTAIRE' → Notaire
+  'CONSEIL_JURIDIQUE' → Conseil juridique
+  'STAGIAIRE' → Stagiaire / Collaborateur
+  'SECRETAIRE' → Secrétaire / Clerc
+  'ASSISTANT' → Assistant juridique
+
+
+
+================================================================================
+                    CHAMPS OBLIGATOIRES (null=False, blank=False)
+================================================================================
+
+
+
+================================================================================
+✅ ANALYSE TERMINÉE
+================================================================================
+
+Fichier généré avec succès!
+Utilisez les informations ci-dessus pour créer des scripts de peuplement sans erreurs.
+
+(venv311) C:\Users\SOUARE Ahmed\dev\ged_project\backend>

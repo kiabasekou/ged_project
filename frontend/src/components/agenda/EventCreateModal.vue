@@ -1,252 +1,40 @@
-<template>
-  <v-dialog v-model="isOpen" max-width="700" persistent>
-    <v-card>
-      <v-card-title class="bg-indigo-darken-4 text-white py-4">
-        <v-icon start color="white">mdi-calendar-plus</v-icon>
-        Nouvel événement
-      </v-card-title>
+<!-- ============================================================================
+CORRECTION : frontend/src/components/agenda/EventCreateModal.vue
 
-      <v-card-text class="pa-6">
-        <v-form ref="eventForm" v-model="formValid">
-          <v-row>
-            <!-- Type -->
-            <v-col cols="12">
-              <v-select
-                v-model="form.type"
-                :items="eventTypes"
-                label="Type d'événement *"
-                variant="outlined"
-                density="comfortable"
-                :rules="[rules.required]"
-                prepend-inner-icon="mdi-shape"
-              >
-                <template v-slot:item="{ item, props }">
-                  <v-list-item v-bind="props">
-                    <template v-slot:prepend>
-                      <v-icon :color="item.raw.color">{{ item.raw.icon }}</v-icon>
-                    </template>
-                  </v-list-item>
-                </template>
-                <template v-slot:selection="{ item }">
-                  <v-icon :color="item.raw.color" start>{{ item.raw.icon }}</v-icon>
-                  {{ item.title }}
-                </template>
-              </v-select>
-            </v-col>
-
-            <!-- Titre -->
-            <v-col cols="12">
-              <v-text-field
-                v-model="form.title"
-                label="Titre *"
-                variant="outlined"
-                density="comfortable"
-                :rules="[rules.required, rules.maxLength(200)]"
-                counter="200"
-                prepend-inner-icon="mdi-format-title"
-                placeholder="Ex: Audience TPI Libreville"
-              />
-            </v-col>
-
-            <!-- Date -->
-            <v-col cols="12" md="6">
-              <v-text-field
-                v-model="form.start_date"
-                type="date"
-                label="Date *"
-                variant="outlined"
-                density="comfortable"
-                :rules="[rules.required, rules.dateNotPast]"
-                prepend-inner-icon="mdi-calendar"
-              />
-            </v-col>
-
-            <!-- Toute la journée -->
-            <v-col cols="12" md="6" class="d-flex align-center">
-              <v-switch
-                v-model="form.all_day"
-                label="Toute la journée"
-                color="indigo"
-                hide-details
-                inset
-              />
-            </v-col>
-
-            <!-- Horaires -->
-            <template v-if="!form.all_day">
-              <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="form.start_time"
-                  type="time"
-                  label="Heure début *"
-                  variant="outlined"
-                  density="comfortable"
-                  :rules="[rules.required]"
-                  prepend-inner-icon="mdi-clock-start"
-                />
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="form.end_time"
-                  type="time"
-                  label="Heure fin"
-                  variant="outlined"
-                  density="comfortable"
-                  prepend-inner-icon="mdi-clock-end"
-                />
-              </v-col>
-            </template>
-
-            <!-- Lieu -->
-            <v-col cols="12">
-              <v-text-field
-                v-model="form.location"
-                label="Lieu"
-                variant="outlined"
-                density="comfortable"
-                prepend-inner-icon="mdi-map-marker"
-                placeholder="Ex: TPI Libreville"
-              />
-            </v-col>
-
-            <!-- Dossier -->
-            <v-col cols="12">
-              <v-autocomplete
-                v-model="form.dossier"
-                :items="dossiers"
-                :loading="loadingDossiers"
-                item-title="display_name"
-                item-value="id"
-                label="Dossier lié"
-                variant="outlined"
-                density="comfortable"
-                clearable
-                prepend-inner-icon="mdi-folder"
-              />
-            </v-col>
-
-            <!-- Priorité -->
-            <v-col cols="12" md="6">
-              <v-select
-                v-model="form.priority"
-                :items="priorities"
-                label="Priorité"
-                variant="outlined"
-                density="comfortable"
-                prepend-inner-icon="mdi-flag"
-              >
-                <template v-slot:item="{ item, props }">
-                  <v-list-item v-bind="props">
-                    <template v-slot:prepend>
-                      <v-icon :color="item.raw.color">mdi-flag</v-icon>
-                    </template>
-                  </v-list-item>
-                </template>
-              </v-select>
-            </v-col>
-
-            <!-- Rappel -->
-            <v-col cols="12" md="6">
-              <v-select
-                v-model="form.reminder"
-                :items="reminders"
-                label="Rappel"
-                variant="outlined"
-                density="comfortable"
-                clearable
-                prepend-inner-icon="mdi-bell"
-              />
-            </v-col>
-
-            <!-- Description -->
-            <v-col cols="12">
-              <v-textarea
-                v-model="form.description"
-                label="Description / Notes"
-                variant="outlined"
-                density="comfortable"
-                rows="3"
-                prepend-inner-icon="mdi-text"
-                placeholder="Notes importantes..."
-              />
-            </v-col>
-          </v-row>
-        </v-form>
-
-        <!-- Erreurs -->
-        <v-expand-transition>
-          <v-alert
-            v-if="error"
-            type="error"
-            variant="tonal"
-            closable
-            class="mt-4"
-            @click:close="error = null"
-          >
-            {{ error }}
-          </v-alert>
-        </v-expand-transition>
-      </v-card-text>
-
-      <v-card-actions class="px-6 pb-6">
-        <v-spacer />
-        <v-btn
-          variant="text"
-          @click="close"
-          :disabled="loading"
-        >
-          Annuler
-        </v-btn>
-        <v-btn
-          color="indigo-darken-4"
-          variant="elevated"
-          :loading="loading"
-          :disabled="!formValid"
-          @click="submit"
-        >
-          Créer l'événement
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
-</template>
+============================================================================ -->
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, reactive, watch, computed, onMounted, nextTick } from 'vue'
 import { useAgendaStore } from '@/stores/agenda'
-import api from '@/plugins/axios'
+import { useDossierStore } from '@/stores/dossier'
 
+// Props & Emits
 const props = defineProps({
-  modelValue: Boolean,
   initialDate: {
     type: String,
-    default: null
+    default: () => new Date().toISOString().split('T')[0]
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'created'])
+const emit = defineEmits(['created', 'close'])
 
+// Stores
 const agendaStore = useAgendaStore()
+const dossierStore = useDossierStore()
 
-// État
+// State
+const isOpen = ref(false)
 const eventForm = ref(null)
-const formValid = ref(false)
 const loading = ref(false)
 const loadingDossiers = ref(false)
 const error = ref(null)
 const dossiers = ref([])
 
-// Computed
-const isOpen = computed({
-  get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
-})
-
-// Formulaire
-const form = ref({
+// Form data
+const form = reactive({
   type: 'RDV',
   title: '',
-  start_date: props.initialDate || new Date().toISOString().split('T')[0],
+  start_date: props.initialDate,
   start_time: '09:00',
   end_time: '10:00',
   all_day: false,
@@ -257,54 +45,38 @@ const form = ref({
   description: ''
 })
 
-// Configuration
+// Types d'événements
 const eventTypes = [
-  { 
-    title: 'Audience', 
-    value: 'AUDIENCE', 
-    icon: 'mdi-gavel',
-    color: '#D32F2F'
-  },
-  { 
-    title: 'Rendez-vous client', 
-    value: 'RDV', 
-    icon: 'mdi-account-tie',
-    color: '#1976D2'
-  },
-  { 
-    title: 'Formalité notariale', 
-    value: 'FORMALITE', 
-    icon: 'mdi-file-sign',
-    color: '#F57C00'
-  },
-  { 
-    title: 'Congé', 
-    value: 'CONGE', 
-    icon: 'mdi-airplane',
-    color: '#757575'
-  },
-  { 
-    title: 'Autre', 
-    value: 'AUTRE', 
-    icon: 'mdi-calendar-star',
-    color: '#455A64'
-  }
+  { value: 'AUDIENCE', title: 'Audience / Plaidoirie', icon: 'mdi-gavel', color: 'red-darken-2' },
+  { value: 'RDV', title: 'Rendez-vous client', icon: 'mdi-calendar-account', color: 'blue' },
+  { value: 'FORMALITE', title: 'Formalité notariale', icon: 'mdi-file-sign', color: 'purple' },
+  { value: 'CONGE', title: 'Congé / Absence', icon: 'mdi-beach', color: 'green-darken-1' },
+  { value: 'AUTRE', title: 'Autre événement', icon: 'mdi-calendar-blank', color: 'grey-darken-1' }
 ]
 
+// Priorités
 const priorities = [
-  { title: 'Normale', value: 'NORMAL', color: 'grey' },
-  { title: 'Haute', value: 'HIGH', color: 'orange' },
-  { title: 'Urgente', value: 'URGENT', color: 'red' }
+  { value: 'LOW', title: 'Basse', icon: 'mdi-flag-outline', color: 'blue-grey' },
+  { value: 'NORMAL', title: 'Normale', icon: 'mdi-flag', color: 'grey' },
+  { value: 'HIGH', title: 'Haute', icon: 'mdi-flag', color: 'orange' },
+  { value: 'URGENT', title: 'Urgente', icon: 'mdi-flag', color: 'red' }
 ]
 
+// Rappels
 const reminders = [
-  { title: '15 minutes avant', value: '15_MIN' },
-  { title: '1 heure avant', value: '1_HOUR' },
-  { title: '1 jour avant', value: '1_DAY' },
-  { title: '1 semaine avant', value: '1_WEEK' }
+  { value: 'NONE', title: 'Aucun rappel' },
+  { value: '15_MIN', title: '15 minutes avant' },
+  { value: '1_HOUR', title: '1 heure avant' },
+  { value: '1_DAY', title: '1 jour avant' },
+  { value: '1_WEEK', title: '1 semaine avant' }
 ]
 
-// Règles
+// Computed
+const selectedEventType = computed(() => {
+  return eventTypes.find(t => t.value === form.type) || { icon: 'mdi-calendar-plus', color: 'indigo' }
+})
+
+// Règles de validation
 const rules = {
   required: v => !!v || 'Ce champ est requis',
   maxLength: max => v => !v || v.length <= max || `Maximum ${max} caractères`,
@@ -318,22 +90,53 @@ const rules = {
 }
 
 // Méthodes
+const open = () => {
+  isOpen.value = true
+}
+
+const close = () => {
+  isOpen.value = false
+  error.value = null
+  emit('close')
+}
+
+const resetForm = () => {
+  form.type = 'RDV'
+  form.title = ''
+  form.start_date = props.initialDate || new Date().toISOString().split('T')[0]
+  form.start_time = '09:00'
+  form.end_time = '10:00'
+  form.all_day = false
+  form.location = ''
+  form.dossier = null
+  form.priority = 'NORMAL'
+  form.reminder = '1_DAY'
+  form.description = ''
+  error.value = null
+
+  nextTick(() => {
+    if (eventForm.value) {
+      eventForm.value.resetValidation()
+    }
+  })
+}
+
 const loadDossiers = async () => {
   loadingDossiers.value = true
   try {
-    const response = await api.get('/dossiers/', {
-      params: { 
-        page_size: 100, 
-        status: 'OUVERT',
-        ordering: '-opening_date' 
-      }
+    await dossierStore.fetchList({ 
+      status: 'OUVERT',
+      page_size: 100,
+      ordering: '-opening_date'
     })
-    dossiers.value = (response.data.results || []).map(d => ({
-      id: d.id,
-      display_name: `${d.reference_code} - ${d.title}`
+    
+    dossiers.value = dossierStore.list.map(d => ({
+      value: d.id,
+      title: `${d.reference_code} - ${d.title}`
     }))
   } catch (err) {
     console.error('Erreur chargement dossiers:', err)
+    error.value = 'Impossible de charger les dossiers ouverts'
   } finally {
     loadingDossiers.value = false
   }
@@ -342,76 +145,295 @@ const loadDossiers = async () => {
 const submit = async () => {
   const { valid } = await eventForm.value.validate()
   if (!valid) return
-  
+
   loading.value = true
   error.value = null
-  
+
   try {
     const payload = {
-      type: form.value.type,
-      title: form.value.title,
-      start_date: form.value.start_date,
-      all_day: form.value.all_day,
-      priority: form.value.priority,
-      description: form.value.description
+      type: form.type,
+      title: form.title,
+      start_date: form.start_date,
+      all_day: form.all_day,
+      priority: form.priority,
+      reminder: form.reminder
     }
-    
-    // Champs optionnels
-    if (form.value.dossier) payload.dossier = form.value.dossier
-    if (form.value.location) payload.location = form.value.location
-    if (form.value.reminder) payload.reminder = form.value.reminder
-    
-    // Horaires si pas toute la journée
-    if (!form.value.all_day) {
-      if (form.value.start_time) payload.start_time = form.value.start_time
-      if (form.value.end_time) payload.end_time = form.value.end_time
-      payload.end_date = form.value.start_date
+
+    if (form.dossier) payload.dossier = form.dossier
+    if (form.location) payload.location = form.location
+    if (form.description) payload.description = form.description
+
+    if (!form.all_day) {
+      payload.start_time = form.start_time
+      payload.end_time = form.end_time
+      payload.end_date = form.start_date
     }
-    
+
     const newEvent = await agendaStore.createEvent(payload)
-    
-    // Succès
     emit('created', newEvent)
     close()
-    
+
   } catch (err) {
     console.error('Erreur création événement:', err)
-    error.value = agendaStore.error || 'Erreur lors de la création de l\'événement'
+
+    if (err.response?.data) {
+      const errors = err.response.data
+      if (typeof errors === 'object' && !Array.isArray(errors)) {
+        error.value = Object.entries(errors)
+          .map(([field, messages]) => {
+            const labels = {
+              title: 'Titre',
+              start_date: 'Date',
+              start_time: 'Heure de début',
+              end_time: 'Heure de fin',
+              type: 'Type d\'événement',
+              dossier: 'Dossier'
+            }
+            const label = labels[field] || field.charAt(0).toUpperCase() + field.slice(1)
+            const msg = Array.isArray(messages) ? messages.join(', ') : messages
+            return `• ${label} : ${msg}`
+          })
+          .join('\n')
+      } else {
+        error.value = errors.detail || errors.non_field_errors?.[0] || 'Erreur lors de la création'
+      }
+    } else {
+      error.value = 'Impossible de contacter le serveur'
+    }
   } finally {
     loading.value = false
   }
 }
 
-const close = () => {
-  isOpen.value = false
-  if (eventForm.value) {
-    eventForm.value.reset()
-  }
-  error.value = null
-}
-
-// Watch ouverture dialog
+// Watch pour ouverture
 watch(isOpen, (newVal) => {
   if (newVal) {
+    resetForm()
     loadDossiers()
-    // Reset form
-    form.value = {
-      type: 'RDV',
-      title: '',
-      start_date: props.initialDate || new Date().toISOString().split('T')[0],
-      start_time: '09:00',
-      end_time: '10:00',
-      all_day: false,
-      location: '',
-      dossier: null,
-      priority: 'NORMAL',
-      reminder: '1_DAY',
-      description: ''
-    }
   }
 })
+
+// Expose open method
+defineExpose({ open })
 </script>
 
-<style scoped>
-/* Styles spécifiques si nécessaire */
-</style>
+<template>
+  <v-dialog v-model="isOpen" max-width="700" persistent>
+    <v-card>
+      <!-- En-tête avec icône dynamique -->
+      <v-card-title class="bg-indigo-darken-4 text-white py-4 d-flex align-center">
+        <v-icon :color="selectedEventType.color" start size="32">
+          {{ selectedEventType.icon }}
+        </v-icon>
+        <span class="text-h6 font-weight-bold">Nouvel événement</span>
+      </v-card-title>
+
+      <!-- Contenu -->
+      <v-card-text class="pa-6">
+        <v-form ref="eventForm" @submit.prevent="submit">
+          <!-- Type d'événement -->
+          <v-select
+            v-model="form.type"
+            :items="eventTypes"
+            item-title="title"
+            item-value="value"
+            label="Type d'événement *"
+            variant="outlined"
+            density="comfortable"
+            prepend-inner-icon="mdi-shape"
+            :rules="[rules.required]"
+            class="mb-4"
+          >
+            <template #item="{ props, item }">
+              <v-list-item v-bind="props">
+                <template #prepend>
+                  <v-icon :color="item.raw.color" class="mr-3">{{ item.raw.icon }}</v-icon>
+                </template>
+                <template #title>
+                  {{ item.title }}
+                </template>
+              </v-list-item>
+            </template>
+            <template #selection="{ item }">
+              <v-icon :color="item.raw.color" start>{{ item.raw.icon }}</v-icon>
+              {{ item.title }}
+            </template>
+          </v-select>
+
+          <!-- Titre -->
+          <v-text-field
+            v-model="form.title"
+            label="Titre de l'événement *"
+            variant="outlined"
+            density="comfortable"
+            prepend-inner-icon="mdi-format-title"
+            placeholder="Ex: Audience TPI - Affaire Mba c/ Nguema"
+            :rules="[rules.required, rules.maxLength(200)]"
+            counter="200"
+            autofocus
+            class="mb-4"
+          />
+
+          <!-- Dossier lié -->
+          <v-autocomplete
+            v-model="form.dossier"
+            :items="dossiers"
+            item-title="title"
+            item-value="value"
+            label="Dossier lié (optionnel)"
+            variant="outlined"
+            density="comfortable"
+            prepend-inner-icon="mdi-folder-search"
+            :loading="loadingDossiers"
+            clearable
+            class="mb-4"
+          />
+
+          <!-- Date -->
+          <v-text-field
+            v-model="form.start_date"
+            type="date"
+            label="Date *"
+            variant="outlined"
+            density="comfortable"
+            prepend-inner-icon="mdi-calendar"
+            :rules="[rules.required, rules.dateNotPast]"
+            class="mb-4"
+          />
+
+          <!-- Journée entière -->
+          <v-checkbox
+            v-model="form.all_day"
+            label="Événement sur toute la journée"
+            color="indigo-darken-4"
+            hide-details
+            class="mb-4"
+          />
+
+          <!-- Horaires conditionnels -->
+          <v-row v-if="!form.all_day" class="mb-4">
+            <v-col cols="12" sm="6">
+              <v-text-field
+                v-model="form.start_time"
+                type="time"
+                label="Heure de début *"
+                variant="outlined"
+                density="comfortable"
+                prepend-inner-icon="mdi-clock-start"
+                :rules="[rules.required]"
+              />
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-text-field
+                v-model="form.end_time"
+                type="time"
+                label="Heure de fin *"
+                variant="outlined"
+                density="comfortable"
+                prepend-inner-icon="mdi-clock-end"
+                :rules="[rules.required]"
+              />
+            </v-col>
+          </v-row>
+
+          <!-- Lieu -->
+          <v-text-field
+            v-model="form.location"
+            label="Lieu (optionnel)"
+            variant="outlined"
+            density="comfortable"
+            prepend-inner-icon="mdi-map-marker"
+            placeholder="Ex: Tribunal de Première Instance"
+            class="mb-4"
+          />
+
+          <!-- Priorité -->
+          <v-select
+            v-model="form.priority"
+            :items="priorities"
+            item-title="title"
+            item-value="value"
+            label="Priorité"
+            variant="outlined"
+            density="comfortable"
+            prepend-inner-icon="mdi-flag"
+            class="mb-4"
+          >
+            <template #item="{ props, item }">
+              <v-list-item v-bind="props">
+                <template #prepend>
+                  <v-icon :color="item.raw.color" class="mr-3">{{ item.raw.icon }}</v-icon>
+                </template>
+              </v-list-item>
+            </template>
+            <template #selection="{ item }">
+              <v-icon :color="item.raw.color" start>{{ item.raw.icon }}</v-icon>
+              {{ item.title }}
+            </template>
+          </v-select>
+
+          <!-- Rappel -->
+          <v-select
+            v-model="form.reminder"
+            :items="reminders"
+            item-title="title"
+            item-value="value"
+            label="Rappel"
+            variant="outlined"
+            density="comfortable"
+            prepend-inner-icon="mdi-bell"
+            clearable
+            class="mb-4"
+          />
+
+          <!-- Description -->
+          <v-textarea
+            v-model="form.description"
+            label="Description / Notes (optionnel)"
+            variant="outlined"
+            density="comfortable"
+            rows="3"
+            prepend-inner-icon="mdi-text"
+            placeholder="Pièces à apporter, contacts, remarques importantes..."
+            :rules="[rules.maxLength(1000)]"
+            counter="1000"
+            class="mb-4"
+          />
+
+          <!-- Erreur -->
+          <v-alert
+            v-if="error"
+            type="error"
+            variant="tonal"
+            class="mb-4"
+            closable
+            @click:close="error = null"
+          >
+            <div class="text-body-2" style="white-space: pre-line;">{{ error }}</div>
+          </v-alert>
+        </v-form>
+      </v-card-text>
+
+      <!-- Actions -->
+      <v-card-actions class="pa-6 pt-0">
+        <v-spacer />
+        <v-btn
+          variant="text"
+          @click="close"
+          :disabled="loading"
+        >
+          Annuler
+        </v-btn>
+        <v-btn
+          color="indigo-darken-4"
+          variant="elevated"
+          :loading="loading"
+          prepend-icon="mdi-check"
+          @click="submit"
+        >
+          Créer l'événement
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+</template>
