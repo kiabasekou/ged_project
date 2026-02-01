@@ -1,4 +1,3 @@
-// src/plugins/axios.js
 import axios from 'axios'
 
 const api = axios.create({
@@ -6,7 +5,7 @@ const api = axios.create({
   timeout: 10000,
 })
 
-// Intercepteur : ajoute le token JWT à chaque requête
+// Intercepteur : ajoute le token JWT
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token')
   if (token) {
@@ -15,7 +14,7 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Intercepteur réponse : gestion déconnexion si 401
+// Intercepteur réponse : gestion 401
 api.interceptors.response.use(
   (response) => response,
   (error) => {

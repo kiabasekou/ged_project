@@ -19,7 +19,7 @@ const login = async (): Promise<void> => {
     error.value = 'Veuillez saisir votre nom d’utilisateur et votre mot de passe.'
     return
   }
-
+console.log('API Base URL:', import.meta.env.VITE_API_BASE_URL)
   loading.value = true
   error.value = null
 

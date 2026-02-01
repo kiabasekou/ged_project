@@ -1,8 +1,7 @@
 // frontend/vite.config.js
-
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { fileURLToPath, URL } from 'node:url'  // ← Important pour l'alias @
+import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
   plugins: [vue()],
@@ -19,7 +18,7 @@ export default defineConfig({
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
         secure: false,
-        // rewrite: (path) => path.replace(/^\/api/, '/api') // optionnel
+        rewrite: (path) => path
       }
     }
   }

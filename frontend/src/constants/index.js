@@ -282,6 +282,22 @@ export const UPLOAD_CONFIG = {
   ALLOWED_FILE_TYPES: (import.meta.env.VITE_ALLOWED_FILE_TYPES || 'pdf,doc,docx,xls,xlsx,jpg,jpeg,png').split(','),
   CHUNK_SIZE: 5 * 1024 * 1024, // 5 MB chunks pour upload progressif
 }
+/**
+ * Alias pour validation fichiers (compatibilité composables)
+ */
+export const FILE_CONSTRAINTS = {
+  MAX_FILE_SIZE: UPLOAD_CONFIG.MAX_FILE_SIZE,
+  ALLOWED_EXTENSIONS: UPLOAD_CONFIG.ALLOWED_FILE_TYPES,
+  ALLOWED_MIME_TYPES: [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'image/jpeg',
+    'image/png'
+  ]
+}
 
 /**
  * Configuration des délais
@@ -402,6 +418,7 @@ export default {
   EVENT_TYPES,
   PAGINATION,
   UPLOAD_CONFIG,
+  FILE_CONSTRAINTS,
   TIMEOUTS,
   ERROR_MESSAGES,
   SUCCESS_MESSAGES,

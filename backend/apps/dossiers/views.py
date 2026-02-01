@@ -39,7 +39,8 @@ from django.db.models import Count, Q, OuterRef, Subquery, IntegerField
 from django.utils.translation import gettext_lazy as _
 from rest_framework import viewsets, filters, permissions
 from django_filters.rest_framework import DjangoFilterBackend
-from apps.dossiers.models import Dossier, DossierDocument, DossierFolder # Adapte les imports
+from .models import Dossier
+from apps.documents.models import Folder, Document
 
 class DossierViewSet(viewsets.ModelViewSet):
     """
@@ -85,10 +86,10 @@ class DossierViewSet(viewsets.ModelViewSet):
         # Cette technique évite le produit cartésien et est beaucoup plus performante
         # que d'utiliser annotate(Count(...)) sur plusieurs relations.
         
-        docs_qs = DossierDocument.objects.filter(dossier=OuterRef('pk')).values('dossier')
+        docs_qs = Document.objects.filter(dossier=OuterRef('pk')).values('dossier')
         count_docs = docs_qs.annotate(cnt=Count('pk')).values('cnt')
 
-        folders_qs = DossierFolder.objects.filter(dossier=OuterRef('pk')).values('dossier')
+        folders_qs = Folder.objects.filter(dossier=OuterRef('pk')).values('dossier')
         count_folders = folders_qs.annotate(cnt=Count('pk')).values('cnt')
 
         # Base QuerySet avec select_related (FK simples)
