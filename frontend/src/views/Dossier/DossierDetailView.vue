@@ -348,6 +348,84 @@
         @cancel="showUploadDialog = false"
       />
     </v-dialog>
+
+    <!-- Dialog Modification Dossier -->
+    <v-dialog v-model="showEditDialog" max-width="700" persistent>
+      <v-card>
+        <v-card-title class="bg-indigo-darken-4 text-white py-4">
+          <v-icon start color="white">mdi-pencil</v-icon>
+          Modifier le dossier
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <v-form ref="editForm">
+            <v-text-field
+              v-model="editData.title"
+              label="Titre du dossier *"
+              variant="outlined"
+              class="mb-4"
+              :rules="[v => !!v || 'Requis']"
+            />
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-select
+                  v-model="editData.category"
+                  :items="categoryOptions"
+                  item-title="title"
+                  item-value="value"
+                  label="Catégorie"
+                  variant="outlined"
+                />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-select
+                  v-model="editData.status"
+                  :items="statusOptions"
+                  item-title="title"
+                  item-value="value"
+                  label="Statut"
+                  variant="outlined"
+                />
+              </v-col>
+            </v-row>
+            <v-text-field
+              v-model="editData.jurisdiction"
+              label="Juridiction"
+              variant="outlined"
+              class="mb-4"
+            />
+            <v-text-field
+              v-model="editData.critical_deadline"
+              type="date"
+              label="Date limite critique"
+              variant="outlined"
+              clearable
+              class="mb-4"
+            />
+            <v-textarea
+              v-model="editData.description"
+              label="Description / Notes"
+              variant="outlined"
+              rows="3"
+            />
+          </v-form>
+        </v-card-text>
+        <v-card-actions class="pa-6 pt-0">
+          <v-spacer />
+          <v-btn variant="text" @click="showEditDialog = false" :disabled="editLoading">
+            Annuler
+          </v-btn>
+          <v-btn
+            color="indigo-darken-4"
+            variant="flat"
+            prepend-icon="mdi-check"
+            :loading="editLoading"
+            @click="saveEdit"
+          >
+            Enregistrer
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -370,6 +448,39 @@ const loadingDocuments = ref(false)
 const error404 = ref(false)
 const tab = ref('info')
 const showUploadDialog = ref(false)
+const showEditDialog = ref(false)
+const editLoading = ref(false)
+const editForm = ref(null)
+const editData = ref({
+  title: '',
+  category: '',
+  status: '',
+  jurisdiction: '',
+  critical_deadline: null,
+  description: ''
+})
+
+const categoryOptions = [
+  { value: 'CONTENTIEUX', title: 'Contentieux' },
+  { value: 'CONSEIL', title: 'Conseil juridique' },
+  { value: 'RECOUVREMENT', title: 'Recouvrement' },
+  { value: 'TRAVAIL', title: 'Droit du travail' },
+  { value: 'IMMOBILIER', title: 'Immobilier' },
+  { value: 'SUCCESSION', title: 'Succession' },
+  { value: 'MARIAGE', title: 'Mariage' },
+  { value: 'DONATION', title: 'Donation' },
+  { value: 'SOCIETE', title: 'Société OHADA' },
+  { value: 'FAMILLE', title: 'Famille' },
+  { value: 'COMMERCIAL', title: 'Commercial' },
+  { value: 'AUTRE', title: 'Autre' }
+]
+
+const statusOptions = [
+  { value: 'OUVERT', title: 'Ouvert' },
+  { value: 'ATTENTE', title: 'En attente' },
+  { value: 'SUSPENDU', title: 'Suspendu' },
+  { value: 'CLOTURE', title: 'Clôturé' }
+]
 
 // Computed
 const selectedFolder = computed(() => {
@@ -468,31 +579,57 @@ const handleUploaded = (newDoc) => {
 }
 
 const editDossier = () => {
-  // TODO: Implémenter édition
-  console.log('Éditer dossier')
+  editData.value = {
+    title: dossier.value.title || '',
+    category: dossier.value.category || '',
+    status: dossier.value.status || '',
+    jurisdiction: dossier.value.jurisdiction || '',
+    critical_deadline: dossier.value.critical_deadline || null,
+    description: dossier.value.description || ''
+  }
+  showEditDialog.value = true
+}
+
+const saveEdit = async () => {
+  editLoading.value = true
+  try {
+    const payload = { ...editData.value }
+    // Nettoyer les champs vides
+    if (!payload.critical_deadline) delete payload.critical_deadline
+    if (!payload.jurisdiction) delete payload.jurisdiction
+
+    const response = await api.patch(`/dossiers/${dossier.value.id}/`, payload)
+    dossier.value = response.data
+    showEditDialog.value = false
+  } catch (err) {
+    console.error('Erreur modification:', err)
+    alert(err.response?.data?.detail || 'Erreur lors de la modification')
+  } finally {
+    editLoading.value = false
+  }
 }
 
 const closeDossier = async () => {
   if (!confirm('Clôturer ce dossier ?')) return
-  
+
   try {
-    await api.patch(`/dossiers/${dossier.value.id}/`, { status: 'CLOTURE' })
-    dossier.value.status = 'CLOTURE'
+    const response = await api.post(`/dossiers/${dossier.value.id}/cloturer/`)
+    dossier.value = response.data
   } catch (err) {
     console.error('Erreur clôture:', err)
-    alert('Erreur lors de la clôture')
+    alert(err.response?.data?.error || 'Erreur lors de la clôture')
   }
 }
 
 const deleteDossier = async () => {
-  if (!confirm('Supprimer définitivement ce dossier ?')) return
-  
+  if (!confirm('Supprimer définitivement ce dossier ? Cette action est irréversible.')) return
+
   try {
     await api.delete(`/dossiers/${dossier.value.id}/`)
     router.push({ name: 'DossierList' })
   } catch (err) {
     console.error('Erreur suppression:', err)
-    alert('Erreur lors de la suppression')
+    alert(err.response?.data?.detail || 'Erreur lors de la suppression')
   }
 }
 

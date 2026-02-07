@@ -218,7 +218,7 @@ const formatDate = (dateString) => {
               <v-icon
                 :color="stats.en_retard > 0 ? 'error' : 'success'"
                 size="large"
- tos="mr-2"
+ class="mr-2"
               >
                 {{ stats.en_retard > 0 ? 'mdi-alert' : 'mdi-check-decagram' }}
               </v-icon>

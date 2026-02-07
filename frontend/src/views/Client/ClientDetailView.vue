@@ -14,6 +14,10 @@ const dossiers = ref<Dossier[]>([])
 const loading = ref(true)
 const actionLoading = ref(false)
 const error = ref<string | null>(null)
+const showEditDialog = ref(false)
+const editLoading = ref(false)
+const editForm = ref(null)
+const editData = ref<Record<string, any>>({})
 
 // === COMPUTED ===
 const clientId = computed(() => route.params.id as string)
@@ -72,6 +76,48 @@ const grantConsent = async () => {
     error.value = 'Échec de la mise à jour du consentement.'
   } finally {
     actionLoading.value = false
+  }
+}
+
+// === MODIFICATION CLIENT ===
+const openEditDialog = () => {
+  if (!client.value) return
+  const c = client.value
+  editData.value = {
+    first_name: c.first_name || '',
+    last_name: c.last_name || '',
+    company_name: c.company_name || '',
+    rccm: c.rccm || '',
+    nif: c.nif || '',
+    email: c.email || '',
+    phone_primary: c.phone_primary || '',
+    phone_secondary: c.phone_secondary || '',
+    address_line: c.address_line || '',
+    city: c.city || '',
+    neighborhood: c.neighborhood || ''
+  }
+  showEditDialog.value = true
+}
+
+const saveClient = async () => {
+  if (!client.value?.id) return
+  editLoading.value = true
+  try {
+    const response = await api.patch(`/clients/${client.value.id}/`, editData.value)
+    client.value = response.data
+    clientStore.current = response.data
+    showEditDialog.value = false
+  } catch (err: any) {
+    console.error('Erreur modification client:', err)
+    const data = err.response?.data
+    if (data && typeof data === 'object') {
+      const msg = Object.entries(data).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join('\n')
+      alert(msg)
+    } else {
+      alert('Erreur lors de la modification')
+    }
+  } finally {
+    editLoading.value = false
   }
 }
 
@@ -140,15 +186,26 @@ onMounted(() => {
         </div>
       </div>
 
-      <v-btn
-        color="indigo-darken-4"
-        variant="outlined"
-        prepend-icon="mdi-arrow-left"
-        size="large"
-        @click="router.push('/clients')"
-      >
-        Retour
-      </v-btn>
+      <div class="d-flex gap-3">
+        <v-btn
+          color="indigo-darken-4"
+          variant="flat"
+          prepend-icon="mdi-pencil"
+          size="large"
+          @click="openEditDialog"
+        >
+          Modifier
+        </v-btn>
+        <v-btn
+          color="indigo-darken-4"
+          variant="outlined"
+          prepend-icon="mdi-arrow-left"
+          size="large"
+          @click="router.push('/clients')"
+        >
+          Retour
+        </v-btn>
+      </div>
     </div>
 
     <v-row>
@@ -268,6 +325,68 @@ onMounted(() => {
         </v-card>
       </v-col>
     </v-row>
+
+    <!-- Dialog Modification Client -->
+    <v-dialog v-model="showEditDialog" max-width="700" persistent>
+      <v-card>
+        <v-card-title class="bg-indigo-darken-4 text-white py-4">
+          <v-icon start color="white">mdi-pencil</v-icon>
+          Modifier le client
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <v-form ref="editForm">
+            <!-- Champs personne physique -->
+            <template v-if="isPersonnePhysique">
+              <v-row>
+                <v-col cols="6">
+                  <v-text-field v-model="editData.last_name" label="Nom *" variant="outlined" :rules="[v => !!v || 'Requis']" />
+                </v-col>
+                <v-col cols="6">
+                  <v-text-field v-model="editData.first_name" label="Prénom *" variant="outlined" :rules="[v => !!v || 'Requis']" />
+                </v-col>
+              </v-row>
+            </template>
+            <!-- Champs personne morale -->
+            <template v-else>
+              <v-text-field v-model="editData.company_name" label="Raison sociale *" variant="outlined" class="mb-4" :rules="[v => !!v || 'Requis']" />
+              <v-row>
+                <v-col cols="6">
+                  <v-text-field v-model="editData.rccm" label="RCCM" variant="outlined" />
+                </v-col>
+                <v-col cols="6">
+                  <v-text-field v-model="editData.nif" label="NIF" variant="outlined" />
+                </v-col>
+              </v-row>
+            </template>
+            <!-- Champs communs -->
+            <v-row>
+              <v-col cols="6">
+                <v-text-field v-model="editData.email" label="Email" variant="outlined" type="email" />
+              </v-col>
+              <v-col cols="6">
+                <v-text-field v-model="editData.phone_primary" label="Téléphone *" variant="outlined" :rules="[v => !!v || 'Requis']" />
+              </v-col>
+            </v-row>
+            <v-text-field v-model="editData.address_line" label="Adresse" variant="outlined" class="mb-4" />
+            <v-row>
+              <v-col cols="6">
+                <v-text-field v-model="editData.city" label="Ville" variant="outlined" />
+              </v-col>
+              <v-col cols="6">
+                <v-text-field v-model="editData.neighborhood" label="Quartier" variant="outlined" />
+              </v-col>
+            </v-row>
+          </v-form>
+        </v-card-text>
+        <v-card-actions class="pa-6 pt-0">
+          <v-spacer />
+          <v-btn variant="text" @click="showEditDialog = false" :disabled="editLoading">Annuler</v-btn>
+          <v-btn color="indigo-darken-4" variant="flat" prepend-icon="mdi-check" :loading="editLoading" @click="saveClient">
+            Enregistrer
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 

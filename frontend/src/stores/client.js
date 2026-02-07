@@ -34,12 +34,20 @@ export const useClientStore = defineStore('client', {
       }
     },
 
-    // 2. Chargement des statistiques (LA FONCTION MANQUANTE)
+    // 2. Chargement des statistiques
     async fetchStats() {
       this.loadingStats = true
       try {
         const response = await api.get('/clients/stats/')
-        this.stats = response.data
+        const data = response.data
+        // Mapper les clés backend vers les clés frontend
+        this.stats = {
+          total: data.total_clients ?? data.total ?? 0,
+          physiques: data.clients_physiques ?? data.physiques ?? 0,
+          moraux: data.clients_moraux ?? data.moraux ?? 0,
+          actifs: data.clients_actifs ?? data.actifs ?? 0,
+          avec_dossiers: data.avec_dossiers ?? 0
+        }
       } catch (err) {
         console.error('Erreur chargement statistiques clients:', err)
       } finally {

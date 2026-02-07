@@ -318,22 +318,57 @@ class DossierViewSet(viewsets.ModelViewSet):
     def archiver(self, request, pk=None):
         """Archiver un dossier"""
         dossier = self.get_object()
-        
+
         if dossier.status != 'CLOTURE':
             return Response(
                 {'error': 'Seuls les dossiers clôturés peuvent être archivés'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         dossier.status = 'ARCHIVE'
         dossier.archived_date = timezone.now()
         dossier.save()
-        
+
         log_action(
             user=request.user,
             obj=dossier,
             action_type='ARCHIVE',
             description=f"Archivage du dossier {dossier.reference_code}"
         )
-        
+
         return Response(DossierDetailSerializer(dossier).data)
+
+    @action(detail=False, methods=['get'], url_path='stats')
+    def stats(self, request):
+        """
+        Statistiques des dossiers pour le dashboard.
+        GET /dossiers/stats/
+        """
+        qs = self.get_queryset()
+        now = timezone.now().date()
+
+        total = qs.count()
+        ouverts = qs.filter(status='OUVERT').count()
+        en_attente = qs.filter(status='ATTENTE').count()
+        clotures = qs.filter(status='CLOTURE').count()
+        archives = qs.filter(status='ARCHIVE').count()
+        en_retard = qs.filter(
+            critical_deadline__lt=now
+        ).exclude(
+            status__in=['CLOTURE', 'ARCHIVE']
+        ).count()
+
+        # Répartition par catégorie
+        par_categorie = {}
+        for entry in qs.values('category').annotate(count=Count('id')):
+            par_categorie[entry['category']] = entry['count']
+
+        return Response({
+            'total': total,
+            'ouverts': ouverts,
+            'en_attente': en_attente,
+            'en_retard': en_retard,
+            'clotures': clotures,
+            'archives': archives,
+            'par_categorie': par_categorie,
+        })

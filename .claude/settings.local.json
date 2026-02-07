@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(test:*)",
+      "WebFetch(domain:vuetifyjs.com)",
+      "Bash(python manage.py check:*)",
+      "Bash(find:*)",
+      "Bash(done)",
+      "Bash(xargs:*)"
+    ]
+  }
+}

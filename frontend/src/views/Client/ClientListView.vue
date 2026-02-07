@@ -15,10 +15,17 @@ const selectedType = ref<'PHYSIQUE' | 'MORALE' | null>(null)
 const loading = ref<boolean>(true)
 const error = ref<string | null>(null)
 
+// Fonction de chargement avec filtres
+const fetchClients = async (): Promise<void> => {
+  const params: Record<string, any> = { page: 1 }
+  if (searchQuery.value.trim()) params.search = searchQuery.value.trim()
+  if (selectedType.value) params.client_type = selectedType.value
+  await clientStore.fetchList(params)
+}
+
 // Debounce pour la recherche (annulable proprement)
-const debouncedSearch = debounce((query: string) => {
-  clientStore.setFilters({ search: query.trim() || undefined, page: 1 })
-  clientStore.fetchList()
+const debouncedSearch = debounce(() => {
+  fetchClients()
 }, 400)
 
 // Nettoyage du debounce à la destruction du composant
@@ -27,16 +34,12 @@ onBeforeUnmount(() => {
 })
 
 // === WATCHERS ===
-watch(searchQuery, (newQuery) => {
-  debouncedSearch(newQuery)
+watch(searchQuery, () => {
+  debouncedSearch()
 })
 
-watch(selectedType, (newType) => {
-  clientStore.setFilters({ 
-    client_type: newType || undefined, 
-    page: 1 
-  })
-  clientStore.fetchList()
+watch(selectedType, () => {
+  fetchClients()
 })
 
 // === ACTIONS ===
@@ -46,7 +49,7 @@ const refreshData = async (): Promise<void> => {
 
   try {
     await Promise.all([
-      clientStore.fetchList(),
+      fetchClients(),
       clientStore.fetchStats()
     ])
   } catch (err: any) {

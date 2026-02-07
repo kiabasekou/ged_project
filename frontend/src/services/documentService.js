@@ -35,7 +35,7 @@ export const documentService = {
         ...params
       }
       
-      const response = await api.get('/documents/', { params: defaultParams })
+      const response = await api.get('/documents/documents/', { params: defaultParams })
       return response.data
     } catch (error) {
       console.error('Erreur récupération liste documents:', error)
@@ -51,7 +51,7 @@ export const documentService = {
    */
   async fetchDetail(id) {
     try {
-      const response = await api.get(`/documents/${id}/`)
+      const response = await api.get(`/documents/documents/${id}/`)
       return response.data
     } catch (error) {
       console.error(`Erreur récupération document ${id}:`, error)
@@ -94,7 +94,7 @@ export const documentService = {
         }
       }
       
-      const response = await api.post('/documents/', formData, config)
+      const response = await api.post('/documents/documents/', formData, config)
       return response.data
     } catch (error) {
       console.error('Erreur upload document:', error)
@@ -129,7 +129,7 @@ export const documentService = {
       }
       
       const response = await api.post(
-        `/documents/${documentId}/upload-version/`,
+        `/documents/documents/${documentId}/new_version/`,
         formData,
         config
       )
@@ -152,7 +152,7 @@ export const documentService = {
    */
   async updateMetadata(id, metadata) {
     try {
-      const response = await api.patch(`/documents/${id}/`, metadata)
+      const response = await api.patch(`/documents/documents/${id}/`, metadata)
       return response.data
     } catch (error) {
       console.error(`Erreur mise à jour métadonnées document ${id}:`, error)
@@ -170,7 +170,7 @@ export const documentService = {
    */
   async download(id, filename = null) {
     try {
-      const response = await api.get(`/documents/${id}/download/`, {
+      const response = await api.get(`/documents/documents/${id}/download/`, {
         responseType: 'blob'
       })
       
@@ -209,7 +209,7 @@ export const documentService = {
    */
   async verifyIntegrity(id) {
     try {
-      const response = await api.post(`/documents/${id}/verify-integrity/`)
+      const response = await api.post(`/documents/documents/${id}/verify-integrity/`)
       return response.data
     } catch (error) {
       console.error(`Erreur vérification intégrité document ${id}:`, error)
@@ -225,7 +225,7 @@ export const documentService = {
    */
   async fetchVersionHistory(id) {
     try {
-      const response = await api.get(`/documents/${id}/history/`)
+      const response = await api.get(`/documents/documents/${id}/history/`)
       return response.data
     } catch (error) {
       console.error(`Erreur récupération historique document ${id}:`, error)
@@ -244,7 +244,7 @@ export const documentService = {
   async restoreVersion(documentId, versionId) {
     try {
       const response = await api.post(
-        `/documents/${documentId}/restore-version/`,
+        `/documents/documents/${documentId}/restore-version/`,
         { version_id: versionId }
       )
       return response.data
@@ -263,7 +263,7 @@ export const documentService = {
    */
   async delete(id) {
     try {
-      await api.delete(`/documents/${id}/`)
+      await api.delete(`/documents/documents/${id}/`)
     } catch (error) {
       console.error(`Erreur suppression document ${id}:`, error)
       throw this._handleError(error)
@@ -279,7 +279,7 @@ export const documentService = {
    */
   async fetchByDossier(dossierId, options = {}) {
     try {
-      const response = await api.get('/documents/', {
+      const response = await api.get('/documents/documents/', {
         params: {
           dossier: dossierId,
           is_current_version: true,
@@ -303,7 +303,7 @@ export const documentService = {
    */
   async fetchByFolder(folderId, options = {}) {
     try {
-      const response = await api.get('/documents/', {
+      const response = await api.get('/documents/documents/', {
         params: {
           folder: folderId,
           is_current_version: true,
@@ -327,7 +327,7 @@ export const documentService = {
    */
   async quickSearch(query, limit = 10) {
     try {
-      const response = await api.get('/documents/', {
+      const response = await api.get('/documents/documents/', {
         params: {
           search: query,
           is_current_version: true,
@@ -357,7 +357,7 @@ export const documentService = {
   async fetchStats(dossierId = null) {
     try {
       const params = dossierId ? { dossier: dossierId } : {}
-      const response = await api.get('/documents/stats/', { params })
+      const response = await api.get('/documents/documents/stats/', { params })
       return response.data
     } catch (error) {
       console.error('Erreur récupération stats documents:', error)
@@ -379,7 +379,7 @@ export const documentService = {
    */
   async moveToFolder(documentId, targetFolderId) {
     try {
-      const response = await api.patch(`/documents/${documentId}/`, {
+      const response = await api.patch(`/documents/documents/${documentId}/`, {
         folder: targetFolderId
       })
       return response.data

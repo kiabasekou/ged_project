@@ -42,15 +42,17 @@ const API = {
 
   // Documents
   documents: {
-    list: (params) => axios.get('/documents/', { params }),
-    detail: (id) => axios.get(`/documents/${id}/`),
-    upload: (formData, onProgress) => axios.post('/documents/', formData, {
+    list: (params) => axios.get('/documents/documents/', { params }),
+    detail: (id) => axios.get(`/documents/documents/${id}/`),
+    upload: (formData, onProgress) => axios.post('/documents/documents/upload/', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       onUploadProgress: onProgress
     }),
-    download: (id) => `${import.meta.env.VITE_API_BASE_URL}/documents/${id}/download/`,
-    newVersion: (id, formData) => axios.post(`/documents/${id}/nouvelle-version/`, formData),
-    versions: (id) => axios.get(`/documents/${id}/versions/`)
+    download: (id) => `${import.meta.env.VITE_API_BASE_URL}/documents/documents/${id}/download/`,
+    newVersion: (id, formData) => axios.post(`/documents/documents/${id}/new_version/`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }),
+    versions: (id) => axios.get(`/documents/documents/${id}/history/`)
   },
 
   // Folders (arborescence)

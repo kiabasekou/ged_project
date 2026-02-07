@@ -70,42 +70,28 @@ export const useDossierStore = defineStore('dossier', {
       }
     },
 
-    // Charger les statistiques (calculées côté client)
+    // Charger les statistiques depuis l'endpoint backend dédié
     async fetchStats() {
       this.loadingStats = true
       this.error = null
-      
+
       try {
-        // Charger tous les dossiers pour calculer les stats
-        const response = await api.get('/dossiers/', {
-          params: {
-            page_size: 1000,
-            ordering: '-opening_date'
-          }
-        })
-        
-        const allDossiers = response.data.results || []
-        
-        // Calculer les statistiques
-        const now = new Date()
-        
+        const response = await api.get('/dossiers/stats/')
+        const data = response.data
+
         this.stats = {
-          total: allDossiers.length,
-          ouverts: allDossiers.filter(d => d.status === 'OUVERT').length,
-          en_retard: allDossiers.filter(d => {
-            if (!d.critical_deadline || d.status === 'CLOTURE') return false
-            return new Date(d.critical_deadline) < now
-          }).length,
-          clotures: allDossiers.filter(d => d.status === 'CLOTURE').length,
-          par_categorie: this.calculateCategoryStats(allDossiers)
+          total: data.total ?? 0,
+          ouverts: data.ouverts ?? 0,
+          en_retard: data.en_retard ?? 0,
+          clotures: data.clotures ?? 0,
+          par_categorie: data.par_categorie ?? {}
         }
-        
+
         return this.stats
       } catch (error) {
         console.error('Erreur chargement stats:', error)
         this.error = error.response?.data?.detail || 'Erreur de chargement'
-        
-        // Stats par défaut en cas d'erreur
+
         this.stats = {
           total: 0,
           ouverts: 0,
@@ -113,24 +99,11 @@ export const useDossierStore = defineStore('dossier', {
           clotures: 0,
           par_categorie: {}
         }
-        
-        // Ne pas throw pour ne pas bloquer l'interface
+
         return this.stats
       } finally {
         this.loadingStats = false
       }
-    },
-
-    // Calculer stats par catégorie
-    calculateCategoryStats(dossiers) {
-      const categories = {}
-      
-      dossiers.forEach(dossier => {
-        const cat = dossier.category || 'AUTRE'
-        categories[cat] = (categories[cat] || 0) + 1
-      })
-      
-      return categories
     },
 
     // Charger les dossiers récents

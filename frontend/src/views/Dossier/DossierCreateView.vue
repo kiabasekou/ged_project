@@ -167,7 +167,7 @@ const handleSubmit = async () => {
     console.log('Payload création dossier:', payload)
     
     // Appel API via le store
-    const newDossier = await dossierStore.create(payload)
+    const newDossier = await dossierStore.createDossier(payload)
     
     // Succès: redirection vers le détail du dossier
     router.push({ 
